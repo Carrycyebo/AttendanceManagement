@@ -8,16 +8,16 @@
 </head>
 <body>
     <div id="app" class="container">
-        <h1>考勤系统</h1>
+        <h1 class="title">考勤系统</h1>
 
         <!-- 打卡表单 -->
         <div class="checkin-form">
-            <input v-model="name" type="text" placeholder="请输入姓名" required>
-            <button @click="checkin">打卡</button>
+            <input v-model="name" type="text" placeholder="请输入姓名" required class="input">
+            <button @click="checkin" class="btn">打卡</button>
         </div>
 
-        <h2>考勤记录</h2>
-        <table v-if="attendance.length">
+        <h2 class="sub-title">考勤记录</h2>
+        <table v-if="attendance.length" class="attendance-table">
             <thead>
                 <tr>
                     <th>姓名</th>
@@ -27,13 +27,13 @@
             </thead>
             <tbody>
                 <tr v-for="(record, index) in attendance" :key="index">
-                    <td>{{ record.name }}</td>
-                    <td>{{ record.date }}</td>
-                    <td>{{ record.status }}</td>
+                    <td>{{ 打卡人姓名 }}</td>
+                    <td>{{ 打卡日期}}</td>
+                    <td>{{ 打卡状态 }}</td>
                 </tr>
             </tbody>
         </table>
-        <p v-else>暂无考勤记录。</p>
+        <p v-else class="no-record">暂无考勤记录。</p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
