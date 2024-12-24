@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>考勤系统Dashboard</title>
+    <script src="static/js/socket.io.js"></script><!-- 引入Socket.IO库，用于实现浏览器与服务器之间的实时双向通信 -->
+    <script src="static/js/jquery-3.1.1.min.js"></script><!-- 引入jQuery库，方便进行DOM操作、事件处理等 -->
+    <script src="static/js/highcharts.js"></script><!-- 引入Highcharts库，用于创建数据可视化的图表 -->
+    <script src="static/js/exporting.js"></script><!-- 引入Highcharts的导出模块，启用图表的导出功能（如导出为图片、PDF等） -->
+
+</head>
+<body>
+    <div>
+        <b>签到人数:</b>
+        <!-- 用于动态显示签到人数的HTML元素，初始为空，后续通过JavaScript代码更新内容 -->
+        <b id="signInCount"></b>
+        <b>签退人数: </b>
+        <b id="signOutCount"></b>
+    </div>
+    <!-- 定义一个id为'container2'的div，作为Highcharts图表的容器，设置了其在页面中的布局样式（居中、宽度和高度） -->
+    <div id="container2" style="text-align:center;width: 600px;height:400px;"></div>
+
+
+</body>
+
+<script type="text/javascript">
+        // 当整个HTML文档加载完成（DOM树构建完毕且外部资源加载完成，除异步部分）后执行以下函数
+        $(document).ready(function () {
+            // 设置Highcharts的全局配置选项，这里将useUTC设置为false，表示图表时间轴使用本地时间，而非协调世界时
+            Highcharts.setOptions({
+                global: {
+                    useUTC: false
+                }
+            });
+           --设置图表--
+            // 使用Highcharts创建一个图表，指定图表容器的id为'container2'，并传入图表的配置对象
+            Highcharts.chart('container2', {
+                chart: {
+                    type: 'spline',// 设置图表类型为'spline'（折线图）
+                    animation: Highcharts.svg,  // 设置图表动画效果使用SVG方式实现，在旧版本IE浏览器中不执行动画，避免兼容性问题
+                    marginRight: 10,  // 设置图表右侧的空白边距为10像素，调整图表布局空间
+                    events: {
+                        load: function () {
+                            var series1 = this.series[0]; // 获取图表的第一个数据系列，后续用于添加签到人数的数据点
+                            var series2 = this.series[1];// 获取图表的第二个数据系列，后续用于添加签退人数的数据点
+                            setInterval(function () {   // 设置一个定时器，每隔1秒（1000毫秒）执行一次以下函数，用于实时更新图表数据
+                                // 获取当前时间的时间戳（毫秒数），作为新数据点的x轴坐标（通常用于表示时间相关的值）
+                                var x = (new Date()).getTime();
+                                // 获取id为'signInCount'的HTML元素中的文本内容，即当前显示的签到人数
+                                var signInCountText = $('#signInCount').text();
+                                // 将获取到的签到人数文本转换为整数类型，以便作为有效的数据点y轴坐标值
+                                var signInCount = parseInt(signInCountText);
+                                // 向第一个数据系列（签到人数系列）添加新的数据点，参数'true, true'表示添加后重绘图表并将新数据点平移到视图内
+                                series1.addPoint([x, signInCount], true, true);
+                                // 获取id为'signOutCount'的HTML元素中的文本内容，即当前显示的签退人数
+                                var signOutCountText = $('#signOutCount').text();
+                                // 将获取到的签退人数文本转换为整数类型，以便作为有效的数据点y轴坐标值
+                                var signOutCount = parseInt(signOutCountText);
+                                // 向第二个数据系列（签退人数系列）添加新的数据点，参数'true, true'表示添加后重绘图表并将新数据点平移到视图内
+                                series2.addPoint([x, signOutCount], true, true);
+                            }, 1000);
+                        }
+                    }
+                },
+                title: {
+                    // 设置图表的标题文本，清晰表明图表展示的内容是考勤签到签退人数的实时分析情况
+                    text: '考勤签到签退人数实时分析'
+                },
+                xAxis: {
+                    // 设置x轴的数据类型为'datetime'（日期时间类型），适合展示随时间变化的数据
+                    type: 'datetime',
+                    // 设置x轴刻度之间的像素间隔为50，控制刻度疏密程度，便于展示时间跨度和数据分布
+                    tickPixelInterval: 50
+                },
+                yAxis: {
+                    title: {
+                        // 设置y轴的标题为“人数”，让用户直观了解纵轴所代表的含义
+                        text: '人数'
+                    },
+                    plotLines: [{
+                        // 定义一条y轴参考线，可用于辅助查看数据与0值的相对关系等情况
+                        value: 0,
+                        width: 1,
+                        color: '#808080'
+                    }]
+                },
+                tooltip: {
+                    // 自定义鼠标悬停在数据点上时显示的提示框内容格式
+                    formatter: function () {
+                        return '<b>' + this.series.name + '</b><br/>' +
+                            Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                            Highcharts.numberFormat(this.y, 0);  // 人数一般以整数形式展示，所以这里保留0位小数
+                    }
+                },
+                legend: {
+                    // 启用图表的图例功能，方便区分不同数据系列（签到人数和签退人数系列）
+                    enabled: true
+                },
+                exporting: {
+                    // 启用图表的导出功能，用户可将图表导出为图片、PDF等格式
+                    enabled: true
+                },
+                series: [{
+                    name: '签到人数',
+                    data: (function () {
+                        var data = [],
+                            time = (new Date()).getTime(),
+                            i;
+                        // 循环生成一组初始数据，模拟过去一段时间（从当前时间往前推19秒到0秒，每隔1秒生成一个数据点）的数据情况
+                        for (i = -19; i <= 0; i += 1) {
+                            data.push({
+                                x: time + i * 1000,
+                                y: 0  // 初始数据点的y值设为0，后续由实时数据更新
+                            });
+                        }
+                        return data;
+                    }())
+                },
+                {
+                    name: '签退人数',
+                    data: (function () {
+                        var data = [],
+                            time = (new Date()).getTime(),
+                            i;
+                        // 循环生成一组初始数据，模拟过去一段时间（从当前时间往前推19秒到0秒，每隔1秒生成一个数据点）的数据情况
+                        for (i = -19; i <= 0; i += 1) {
+                            data.push({
+                                x: time + i * 1000,
+                                y: 0  // 初始数据点的y值设为0，后续由实时数据更新
+                            });
+                        }
+                        return data;
+                    }())
+                }]
+            });
+        });
+    </script>
+
+<script type="text/javascript" charset="utf-8">
+        // 创建一个Socket.IO客户端连接，连接到当前页面所在域名及对应的端口上的Socket.IO服务器,即将页面域名与服务器端口连接
+        var soxcket = io.connect('http://' + document.domain + ':' + location.port);
+
+        // 当成功连接到Socket.IO服务器时触发的事件处理函数
+        socket.on('connect', function() {
+            // 向服务器发送一个名为'attendance_connect'的自定义事件，携带一个包含'data'属性的对象，告知服务器考勤系统已连接
+            socket.emit('attendance_connect', {data: '考勤系统已连接!'});
+        });
+
+        // 监听服务器发送的'attendance_data'事件，用于接收包含签到和签退人数的消息
+        socket.on('attendance_data', function(message) {
+            console.log(message);// 在控制台打印接收到的消息，方便调试查看数据内容
+            var obj = JSON.parse(message); // 使用JSON.parse将接收到的消息字符串解析为JavaScript对象
+            var signInCount = obj.signInCount;// 从解析后的对象中获取签到人数
+            var signOutCount = obj.signOutCount;// 从解析后的对象中获取签退人数
+            --数据的呈现--
+            $('#signInCount').html(signInCount);// 将签到人数更新到id为'signInCount'的HTML元素中，使其在页面上显示
+            $('#signOutCount').html(signOutCount);// 将签退人数更新到id为'signOutCount'的HTML元素中，使其在页面上显示
+        });
+
+        // 监听服务器发送的'server_connected'事件，当收到该事件时在控制台打印已连接到考勤服务器的提示信息，一旦连接，服务器就打印数据到控制台，html再从控制台接收数据并转换呈现
+        socket.on('server_connected', function() {
+            console.log('已连接到考勤服务器');
+        });
+
+        // 监听与服务器断开连接的事件，当断开连接时在控制台打印相应提示信息
+        socket.on('disconnect', function () {
+            console.log('与考勤服务器断开连接');
+        });
+    </script>
+</html>
+
