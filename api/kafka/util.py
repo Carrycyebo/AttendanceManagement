@@ -1,15 +1,12 @@
-from configparser import ConfigParser
 from kafka import KafkaProducer
+from conf import getConf
+
+config = getConf.conf()
 
 def create_producer():
-    # 创建ConfigParser实例
-    config = ConfigParser()
-
-    # 读取配置文件
-    config.read('default.ini')
 
     # 获取Kafka连接信息
-    bootstrap_servers = config.get('kafka', 'bootstrap_servers')
+    bootstrap_servers = config.get('kafka', 'bootstrap_servers', 'topic')
 
     # 创建Kafka Producer
     producer = KafkaProducer(bootstrap_servers=bootstrap_servers)

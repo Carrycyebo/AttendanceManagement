@@ -1,3 +1,4 @@
 flask
 kafka-python
 pyspark
+pymysql
