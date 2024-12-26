@@ -4,7 +4,7 @@ from pyspark import SparkConf, SparkContext
 conf = SparkConf().setAppName("AttendanceCount").setMaster("local[*]")  # 根据实际情况调整master配置，local[*]表示本地多线程模式
 sc = SparkContext(conf=conf)
 
-# 读取数据文件创建RDD，这里假设数据文件名为student_attendance.txt，且与代码在同一目录下，根据实际情况调整路径
+# 读取数据文件创建RDD，这里假设数据文件名为student_attendance.txt，且与代码在同一目录下，根据实际情况调整
 data_rdd = sc.textFile("student_attendance.txt")
 
 # 对每行数据进行处理，提取班级号和出勤情况，映射为(班级号, (出勤数, 缺勤数))的形式
