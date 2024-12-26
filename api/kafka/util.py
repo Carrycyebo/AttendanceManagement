@@ -14,5 +14,5 @@ def create_producer() -> KafkaProducer:
 
 def close_producer(producer):
     # 关闭Producer
-    producer.close()
+    producer.close()v
 
