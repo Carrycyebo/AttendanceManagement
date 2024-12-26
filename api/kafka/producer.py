@@ -1,5 +1,7 @@
 from api.kafka.util import create_producer, close_producer
 
+## @秋风起  在这个文件下写
+
 def producer():
     # 创建Kafka Producer
     producer = create_producer()
