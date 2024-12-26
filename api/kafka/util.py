@@ -1,11 +1,11 @@
 from kafka import KafkaProducer
 from conf import getConf
 
-config = getConf.conf()
+conf = getConf.conf()
 
-def create_producer(topic) -> KafkaProducer:
+def create_producer() -> KafkaProducer:
     # 获取Kafka连接信息
-    bootstrap_servers = config.get('kafka', 'bootstrap_servers')
+    bootstrap_servers = conf.get("kafka", "bootstrap_servers")
 
     # 创建Kafka Producer
     producer = KafkaProducer(bootstrap_servers=bootstrap_servers)

@@ -1,5 +1,7 @@
 #mysql测试连接
 from api.db import util
+from api.kafka import util
+from api.kafka.util import create_producer
 
 
 def test_db():
@@ -16,6 +18,9 @@ def test_db():
 
 
 def test_kafka():
-    pass
+    create_producer()
 
-test_db()
+
+if __name__ == '__main__':
+    # test_db()
+    test_kafka()
