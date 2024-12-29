@@ -13,8 +13,8 @@ producer = create_producer()
 topic = get_producer_topic()
 
 def send_data(i):
-    className = ["210711", "210712", "210713", "210714", "210715", "210716", "210717", "210718", "210719", "210720",
-                 "210721"]
+    className = ["220711", "220712", "220713", "220714", "220715", "220716", "220717", "220718", "220719", "220720",
+                 "220721"]
     na = random.randint(0, 10)
     studentID = className[na]
 
@@ -24,18 +24,18 @@ def send_data(i):
     name = names[name_1] + str(name_1)
 
     # Class
-    classs = ['Hadoop', 'Java', 'Python', 'Linux', 'Mysql']
+    classs = ['Hadoop', 'Java', 'Python', 'Kafka', 'Spark']
     name_class = random.randint(0, 4)
     className = classs[name_class]
 
     # Time
     num_class = [12, 34, 56, 78]
     num = num_class[random.randint(0, 3)]
-    time_str = str(random.randint(2020, 2021)) + str(random.randint(1, 12)) + str(random.randint(1, 29)) + str(
+    time_str = str(2022) + str(random.randint(1, 12)) + str(random.randint(1, 29)) + str(
         random.randint(1, 24)) + str(num)
     status = "A" if i % 13 != 0 else "L"
 
-    return str(studentID) + '\t' + str(name) + '\t' + str(className) + '\t' + str(time_str) + '\t' + str(status) + '\n'
+    return str(studentID) + '\t' + str(name) + '\t' + str(className) + '\t' + str(time_str) + '\t' + str(status)
 
 def run_producer():
     # 创建Kafka Producer
