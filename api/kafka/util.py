@@ -12,7 +12,12 @@ def create_producer() -> KafkaProducer:
 
     return producer
 
+def get_producer_topic():
+    return conf.get("kafka", "producer_topic")
+
 def close_producer(producer):
     # 关闭Producer
-    producer.close()v
+    producer.close()
+
+
 

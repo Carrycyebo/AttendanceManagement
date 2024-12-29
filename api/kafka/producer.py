@@ -1,62 +1,60 @@
-from apiutil import create_producer, close_producer
-import time,random
-
+from api.kafka.util import create_producer, get_producer_topic
+import time, random
+from kafka import KafkaProducer
 
 ## @秋风起  在这个文件下写
 
+# Kafka 配置
+# bootstrap_servers = ['118.31.166.152:9092']
+# topic = 'test'
+
+# 创建 KafkaProducer 实例
+producer = create_producer()
+topic = get_producer_topic()
+
+def send_data(i):
+    className = ["210711", "210712", "210713", "210714", "210715", "210716", "210717", "210718", "210719", "210720",
+                 "210721"]
+    na = random.randint(0, 10)
+    studentID = className[na]
+
+    # Name
+    names = ['Tank', 'Jack', 'Marry', 'Tom', 'Jesson']
+    name_1 = random.randint(0, 4)
+    name = names[name_1] + str(name_1)
+
+    # Class
+    classs = ['Hadoop', 'Java', 'Python', 'Linux', 'Mysql']
+    name_class = random.randint(0, 4)
+    className = classs[name_class]
+
+    # Time
+    num_class = [12, 34, 56, 78]
+    num = num_class[random.randint(0, 3)]
+    time_str = str(random.randint(2020, 2021)) + str(random.randint(1, 12)) + str(random.randint(1, 29)) + str(
+        random.randint(1, 24)) + str(num)
+    status = "A" if i % 13 != 0 else "L"
+
+    return str(studentID) + '\t' + str(name) + '\t' + str(className) + '\t' + str(time_str) + '\t' + str(status) + '\n'
+
 def run_producer():
     # 创建Kafka Producer
-    producer = create_producer()
+    # producer = create_producer()
     # producer = KafkaProducer(bootstrap_servers='zhao:9092')
-    import time
-    import random
-    from kafka import KafkaProducer
+    
+    print("Kafka Producer 启动成功")
+    
+    i = 0
+    while True:
+        # 生成随机数据
+        data = send_data(i)
 
-    # Kafka 配置
-    bootstrap_servers = ['localhost:9092']
-    topic = 'attendance'
+        # 发送数据到 Kafka
+        producer.send(topic, value=data.encode('utf-8'))
 
-    # 创建 KafkaProducer 实例
-    producer = KafkaProducer(bootstrap_servers=bootstrap_servers, value_serializer=lambda v: str(v).encode('utf-8'))
+        # 打印发送的数据
+        print(f"Sent{i}: {data}")
 
-    # 随机数据生成器
-    classes = ["101", "102", "103", "104", "105"]
-    student_names = ["张三", "李四", "王五", "赵六", "钱七"]
-    courses = ["数学", "英语", "物理", "化学", "生物"]
-    attendance_status = ["L", "A"]  # L: 缺勤, A: 出勤
-
-    def generate_random_data():
-        class_id = random.choice(classes)
-        student_name = random.choice(student_names)
-        course_name = random.choice(courses)
-        student_id = f"S{random.randint(1000, 9999)}"  # 学号 S+4位随机数
-        status = random.choice(attendance_status)
-
-        # 格式化数据，用制表符 \t 分隔
-        data = f"{class_id}\t{student_name}\t{course_name}\t{student_id}\t{status}"
-        return data
-
-    def send_data():
-        while True:
-            # 生成随机数据
-            data = generate_random_data()
-
-            # 发送数据到 Kafka
-            producer.send(topic, value=data)
-
-            # 打印发送的数据
-            print(f"Sent: {data}")
-
-            # 每 5 秒发送一次
-            time.sleep(5)
-
-    if __name__ == "__main__":
-        send_data()
-
-    for line in range(1, 10000000):
-        gender = random.randint(0, 2)
-        num = random.randint(1, 10)
-        genders = str(gender) + ',' + str(num)
-        print('生产的数据为:' + genders)
-        time.sleep(1)
-        producer.send('test', genders.encode('utf8'))
+        # 每 5 秒发送一次
+        time.sleep(5)
+        i += 1
