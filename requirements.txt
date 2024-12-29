@@ -3,3 +3,4 @@ kafka-python
 confluent-kafka
 pyspark
 pymysql
+flask_socketio
