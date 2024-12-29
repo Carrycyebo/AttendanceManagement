@@ -31,3 +31,44 @@ Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN�
 4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
 5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
 6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+
+```
+AttendanceManagement
+├─ api
+│  ├─ db
+│  │  ├─ util.py
+│  │  └─ __pycache__
+│  ├─ kafka
+│  │  ├─ producer.py
+│  │  ├─ util.py
+│  │  └─ __pycache__
+│  ├─ rounter
+│  │  ├─ app.py
+│  │  └─ app.py.old
+│  └─ spark
+│     ├─ sparkRDD.py
+│     ├─ sparksql.py
+│     ├─ sparktest.py
+│     └─ spark_streaming.py
+├─ conf
+│  ├─ getConf.py
+│  └─ __pycache__
+│     └─ getConf.cpython-311.pyc
+├─ config
+│  └─ default.ini
+├─ main.py
+├─ README.md
+├─ requirements.txt
+├─ test.py
+├─ web
+│  ├─ static
+│  │  ├─ style.css
+│  │  └─ vue
+│  │     └─ demo.vue
+│  └─ templates
+│     ├─ index.html
+│     ├─ index.html.old
+│     └─ index1.html.old
+└─ __init__.py
+
+```
