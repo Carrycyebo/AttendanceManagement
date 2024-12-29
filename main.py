@@ -9,14 +9,14 @@ from api.rounter.page import page_bp
 conf = getConf.conf()
 
 # 创建 Flask 应用
-app = Flask(__name__)
+app = Flask(__name__,template_folder='web/templates', static_folder='web/static')
 
 # 注册蓝图
 app.register_blueprint(page_bp)
 
 # 启动 Flask 的线程
 def start_flask():
-    app.run(host=conf.get('server', 'listen'), port=conf.get('server', 'port'), debug=conf.get('server', 'debug'))  # `use_reloader=False` 避免多线程冲突
+    app.run(host=conf.get('server', 'host'), port=conf.get('server', 'port'))  # `use_reloader=False` 避免多线程冲突
 
 # 启动 Kafka 数据生产的线程
 def start_producer():
