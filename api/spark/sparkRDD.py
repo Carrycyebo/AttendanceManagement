@@ -1,26 +1,49 @@
-from pyspark import SparkConf, SparkContext
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import from_json, col, when
+from pyspark.sql.types import StructType, StructField, StringType
 
-# 创建Spark配置和上下文
-conf = SparkConf().setAppName("AttendanceCount").setMaster("local[*]")  # 根据实际情况调整master配置，local[*]表示本地多线程模式
-sc = SparkContext(conf=conf)
+# 创建SparkSession，这是在新版本中推荐用于处理数据的入口
+spark = SparkSession.builder.appName("AttendanceCount").master("local[*]").getOrCreate()
 
-# 读取数据文件创建RDD，这里假设数据文件名为student_attendance.txt，且与代码在同一目录下，根据实际情况调整
-data_rdd = sc.textFile("student_attendance.txt")
+# Kafka相关配置参数，根据实际情况修改
+kafka_bootstrap_servers = "118.31.166.152:9092"
+kafka_topic = "students_topic"
 
-# 对每行数据进行处理，提取班级号和出勤情况，映射为(班级号, (出勤数, 缺勤数))的形式
-mapped_rdd = data_rdd.map(lambda line: line.split(",")).map(lambda fields: (fields[0], 1 if fields[2].strip() == "出勤" else 0)) \
-   .map(lambda x: (x[0], (x[1], 1 - x[1])))
+# 定义读取的Kafka消息的数据格式（示例中假设消息是简单的文本，按逗号分隔的内容，如果实际是JSON等格式需要相应调整结构定义）
+schema = StructType([
+    StructField("class_number", StringType(), True),
+    StructField("other_field_1", StringType(), True),  # 根据实际消息字段补充完整
+    StructField("attendance_status", StringType(), True)
+])
 
-# 按班级号进行聚合，将同一个班级的出勤数和缺勤数分别累加
-reduced_rdd = mapped_rdd.reduceByKey(lambda x, y: (x[0] + y[0], x[1] + y[1]))
+# 从Kafka读取数据创建DataFrame
+df = spark.readStream \
+         .format("kafka") \
+         .option("kafka.bootstrap.servers", kafka_bootstrap_servers) \
+         .option("subscribe", kafka_topic) \
+         .load()
 
-# 收集结果并打印
-results = reduced_rdd.collect()
-for result in results:
-    class_number = result[0]
-    attendance_count = result[1][0]
-    absence_count = result[1][1]
-    print(f"班级号: {class_number}，出勤人数: {attendance_count}，缺勤人数: {absence_count}")
+# 提取消息中的value部分，并转换为字符串类型（假设消息value是文本），然后按照定义的格式解析为DataFrame结构
+df_value = df.selectExpr("CAST(value AS STRING)").select(from_json(col("value"), schema).alias("data")).select("data.*")
 
-# 关闭Spark上下文
-sc.stop()
+# 后续处理可以继续使用DataFrame的操作，比如进行类似之前的转换等
+# 以下示例简单将出勤情况转换为数字标记（出勤为1，缺勤为0），并创建临时视图用于后续SQL风格的聚合查询
+df_transformed = df_value.withColumn("attendance_status", when(col("attendance_status") == "出勤", 1).otherwise(0))
+df_transformed.createTempView("attendance_view")
+
+# 进行聚合查询（示例，按班级号聚合统计出勤人数和缺勤人数，这里使用SQL风格操作，也可以继续使用DataFrame API操作）
+result_df = spark.sql("""
+    SELECT class_number,
+           SUM(CASE WHEN attendance_status = 1 THEN 1 ELSE 0 END) AS attendance_count,
+           SUM(CASE WHEN attendance_status = 0 THEN 1 ELSE 0 END) AS absence_count
+    FROM attendance_view
+    GROUP BY class_number
+""")
+
+# 启动流式查询并输出结果（以下简单打印到控制台，可以根据需求配置输出到文件等其他地方）
+query = result_df.writeStream \
+               .outputMode("complete") \
+               .format("console") \
+               .start()
+
+query.awaitTermination()
