@@ -24,5 +24,5 @@ def test_flask():
 
 if __name__ == '__main__':
     # test_db()
-    # test_kafka()
-    test_flask()
+    test_kafka()
+    # test_flask()
