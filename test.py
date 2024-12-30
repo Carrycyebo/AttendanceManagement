@@ -1,7 +1,7 @@
 #mysql测试连接
 from api.db import util
 from api.kafka.producer import run_producer
-from main import start_flask
+from run_flask import start_flask
 
 def test_db():
     db = util.get_db()

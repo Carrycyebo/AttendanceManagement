@@ -32,6 +32,7 @@ Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN�
 5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
 6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
 
+
 ```
 AttendanceManagement
 ├─ api
@@ -43,8 +44,13 @@ AttendanceManagement
 │  │  ├─ util.py
 │  │  └─ __pycache__
 │  ├─ rounter
-│  │  ├─ app.py
-│  │  └─ app.py.old
+│  │  ├─ app.py.old
+│  │  ├─ page.py
+│  │  ├─ websocket.py
+│  │  └─ __pycache__
+│  │     ├─ app.cpython-311.pyc
+│  │     ├─ page.cpython-311.pyc
+│  │     └─ websocket.cpython-311.pyc
 │  └─ spark
 │     ├─ sparkRDD.py
 │     ├─ sparksql.py
@@ -59,16 +65,24 @@ AttendanceManagement
 ├─ main.py
 ├─ README.md
 ├─ requirements.txt
+├─ run_flask.py
+├─ run_producer.py
 ├─ test.py
 ├─ web
 │  ├─ static
-│  │  ├─ style.css
-│  │  └─ vue
-│  │     └─ demo.vue
+│  │  ├─ css
+│  │  │  └─ style.css
+│  │  ├─ img
+│  │  └─ js
+│  │     └─ socket.js
 │  └─ templates
 │     ├─ index.html
 │     ├─ index.html.old
 │     └─ index1.html.old
-└─ __init__.py
+├─ __init__.py
+└─ __pycache__
+   ├─ main.cpython-311.pyc
+   ├─ run_flask.cpython-311.pyc
+   └─ run_producer.cpython-311.pyc
 
 ```

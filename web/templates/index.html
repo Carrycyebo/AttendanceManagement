@@ -1,13 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flask-SocketIO</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test</title>
+    <script src="static/js/socket.io.js"></script>
+    <script src="static/js/jquery-3.1.1.min.js"></script>
+    <script src="static/js/highcharts.js"></script>
+    <script src="static/js/exporting.js"></script>
+  
+    <script type="text/javascript" charset="utf-8">
+      var socket = io.connect('http://' + document.domain + ':' + location.port);
+  
+      socket.on('connect', function() {
+          socket.emit('test_connect', {data: 'I\'m connected!'});
+      });
+  
+      //***********************************************************
+      socket.on('test_message2',function(message){
+          console.log(message);
+          var obj = eval(message);
+          var result = obj["data"].split(",");
+          $('#inl').html(result[0]);
+          $('#outl').html(result[1]);
+      });
+      //********************************************************
+  
+  
+      socket.on('connected',function(){
+          console.log('connected');
+      });
+  
+      socket.on('disconnect', function () {
+          console.log('disconnect');
+      });
+      </script>
 </head>
 <body>
-  <div id="app"></div>
-    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Harum, quia numquam cum, minus voluptas cumque non reprehenderit tempora nihil aliquid veniam praesentium unde accusamus sunt nulla laborum minima. Sint, veritatis?
-  </script>
+    <h1>WebSocket Test Page</h1>
 </body>
 </html>

@@ -1,22 +1,14 @@
-import logging
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+from flask_socketio import SocketIO
 
 def register_websocket_events(socketio):
-    """
-    注册 WebSocket 事件
-    """
-    @socketio.on('connect')
-    def handle_connect():
-        logger.info("Client connected.")
-        socketio.emit('message', {'data': 'Connected to WebSocket server!'})
 
-    @socketio.on('disconnect')
-    def handle_disconnect():
-        logger.info("Client disconnected.")
+    @socketio.on('test_connect')
+    def handle_test_connect(message):
+        print(f"Received test_connect: {message}")
+        socketio.emit('connected', {'data': 'You are successfully connected!'})
 
     @socketio.on('send_data')
     def handle_send_data(data):
-        logger.info(f"Received data from client: {data}")
-        socketio.emit('response_data', {'data': f"Processed {data}"}, broadcast=True)
+        print(f"Received send_data: {data}")
+        response = f"Processed: {data['data']}"
+        socketio.emit('response_data', {'data': response})
