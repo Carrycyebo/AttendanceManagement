@@ -1,49 +1,82 @@
+import os
+import pymysql
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, when
-from pyspark.sql.types import StructType, StructField, StringType
+import pyspark.sql.functions as F
 
-# 创建SparkSession，这是在新版本中推荐用于处理数据的入口
-spark = SparkSession.builder.appName("AttendanceCount").master("local[*]").getOrCreate()
+# os.environ['JAVA_HOME'] = 'C:\\Program Files\\Java\\jdk1.8.0_351'
+os.environ['HADOOP_HOME'] = 'C:\\hadoop-2.8.1'
 
-# Kafka相关配置参数，根据实际情况修改
-kafka_bootstrap_servers = "118.31.166.152:9092"
-kafka_topic = "students_topic"
+# 将结果写入 MySQL 的函数
+def write_to_mysql(batch_df, batch_id):
+    # 将 DataFrame 转换为 Pandas DataFrame
+    pandas_df = batch_df.toPandas()
 
-# 定义读取的Kafka消息的数据格式（示例中假设消息是简单的文本，按逗号分隔的内容，如果实际是JSON等格式需要相应调整结构定义）
-schema = StructType([
-    StructField("class_number", StringType(), True),
-    StructField("other_field_1", StringType(), True),  # 根据实际消息字段补充完整
-    StructField("attendance_status", StringType(), True)
-])
+    # 连接 MySQL 数据库
+    connection = pymysql.connect(
+        host='43.140.205.103',
+        user='AttendanceManagement',
+        password='cen5CjQpeSKxAWSZ',
+        database='AttendanceManagement'
+    )
 
-# 从Kafka读取数据创建DataFrame
-df = spark.readStream \
-         .format("kafka") \
-         .option("kafka.bootstrap.servers", kafka_bootstrap_servers) \
-         .option("subscribe", kafka_topic) \
-         .load()
+    cursor = connection.cursor()
 
-# 提取消息中的value部分，并转换为字符串类型（假设消息value是文本），然后按照定义的格式解析为DataFrame结构
-df_value = df.selectExpr("CAST(value AS STRING)").select(from_json(col("value"), schema).alias("data")).select("data.*")
+    # 插入数据到 MySQL
+    for _, row in pandas_df.iterrows():
+        class_id = row['class_id']
+        student_id = row['student_id']
+        student_name = row['student_name']
+        status = row['status']
+        count = row['count']
 
-# 后续处理可以继续使用DataFrame的操作，比如进行类似之前的转换等
-# 以下示例简单将出勤情况转换为数字标记（出勤为1，缺勤为0），并创建临时视图用于后续SQL风格的聚合查询
-df_transformed = df_value.withColumn("attendance_status", when(col("attendance_status") == "出勤", 1).otherwise(0))
-df_transformed.createTempView("attendance_view")
+        # 插入语句
+        sql = """
+        INSERT INTO student_attendance (class_id, student_id, student_name, status, count)
+        VALUES (%s, %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE count = count + VALUES(count)
+        """
+        cursor.execute(sql, (class_id, student_id, student_name, status, count))
+    
+    # 提交事务并关闭连接
+    connection.commit()
+    cursor.close()
+    connection.close()
 
-# 进行聚合查询（示例，按班级号聚合统计出勤人数和缺勤人数，这里使用SQL风格操作，也可以继续使用DataFrame API操作）
-result_df = spark.sql("""
-    SELECT class_number,
-           SUM(CASE WHEN attendance_status = 1 THEN 1 ELSE 0 END) AS attendance_count,
-           SUM(CASE WHEN attendance_status = 0 THEN 1 ELSE 0 END) AS absence_count
-    FROM attendance_view
-    GROUP BY class_number
-""")
+if __name__ == '__main__':
+    # 1- 创建 SparkSession
+    spark = SparkSession.builder \
+        .config("spark.sql.shuffle.partitions", 1) \
+        .appName('ss_kafka_push_to_mysql') \
+        .master('local[*]') \
+        .getOrCreate()
 
-# 启动流式查询并输出结果（以下简单打印到控制台，可以根据需求配置输出到文件等其他地方）
-query = result_df.writeStream \
-               .outputMode("complete") \
-               .format("console") \
-               .start()
+    # 2- 读取 Kafka 数据流
+    kafka_stream = spark.readStream \
+        .format("kafka") \
+        .option("kafka.bootstrap.servers", "zhao:9092") \
+        .option("subscribePattern", "test") \
+        .load()
 
-query.awaitTermination()
+    # 3- 解析 Kafka 数据
+    parsed_stream = kafka_stream.selectExpr("cast(value as string) as value", "timestamp") \
+        .withColumn("class_id", F.split(F.col("value"), "\t")[0]) \
+        .withColumn("student_name", F.split(F.col("value"), "\t")[1]) \
+        .withColumn("course", F.split(F.col("value"), "\t")[2]) \
+        .withColumn("student_id", F.split(F.col("value"), "\t")[3]) \
+        .withColumn("status", F.split(F.col("value"), "\t")[4]) \
+        .drop("value")
+
+    # 4- 数据统计
+    # 按照 class_id, student_id, student_name, status 分组并统计数量
+    attendance_counts = parsed_stream.groupBy("class_id", "student_id", "student_name", "status") \
+        .count()
+
+    # 5- 使用 foreachBatch 将数据推送到 MySQL
+    attendance_counts.writeStream \
+        .foreachBatch(write_to_mysql) \
+        .outputMode("update") \
+        .trigger(processingTime="2 seconds") \
+        .start()
+
+    # 等待流任务结束
+    spark.streams.awaitAnyTermination()

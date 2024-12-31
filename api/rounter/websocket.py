@@ -12,3 +12,4 @@ def register_websocket_events(socketio):
         print(f"Received send_data: {data}")
         response = f"Processed: {data['data']}"
         socketio.emit('response_data', {'data': response})
+
