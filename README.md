@@ -33,33 +33,27 @@ Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN�
 6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
 
 
+
 ```
 AttendanceManagement
 ├─ api
 │  ├─ db
 │  │  ├─ util.py
-│  │  └─ __pycache__
 │  ├─ kafka
+│  │  ├─ consumer.py
 │  │  ├─ producer.py
 │  │  ├─ util.py
-│  │  └─ __pycache__
 │  ├─ rounter
 │  │  ├─ app.py.old
 │  │  ├─ page.py
 │  │  ├─ websocket.py
-│  │  └─ __pycache__
-│  │     ├─ app.cpython-311.pyc
-│  │     ├─ page.cpython-311.pyc
-│  │     └─ websocket.cpython-311.pyc
 │  └─ spark
 │     ├─ sparkRDD.py
 │     ├─ sparksql.py
 │     ├─ sparktest.py
-│     └─ spark_streaming.py
+│     └─ structured_streaming.py
 ├─ conf
 │  ├─ getConf.py
-│  └─ __pycache__
-│     └─ getConf.cpython-311.pyc
 ├─ config
 │  └─ default.ini
 ├─ main.py
@@ -74,15 +68,14 @@ AttendanceManagement
 │  │  │  └─ style.css
 │  │  ├─ img
 │  │  └─ js
-│  │     └─ socket.js
+│  │     ├─ exporting.js
+│  │     ├─ highcharts.js
+│  │     ├─ jquery-3.1.1.min.js
+│  │     ├─ socket.io.js
+│  │     └─ socket.io.js.map
 │  └─ templates
 │     ├─ index.html
 │     ├─ index.html.old
 │     └─ index1.html.old
 ├─ __init__.py
-└─ __pycache__
-   ├─ main.cpython-311.pyc
-   ├─ run_flask.cpython-311.pyc
-   └─ run_producer.cpython-311.pyc
-
 ```

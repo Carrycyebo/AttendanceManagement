@@ -1,15 +1,20 @@
 from flask_socketio import SocketIO
+from api.kafka.consumer import get_kafka_consumer
 
-def register_websocket_events(socketio):
+# thread = None
 
-    @socketio.on('test_connect')
-    def handle_test_connect(message):
-        print(f"Received test_connect: {message}")
-        socketio.emit('connected', {'data': 'You are successfully connected!'})
+# def background_thread():
+#     """Example of how to send server generated events to clients."""
+#     consumer = get_kafka_consumer()
+#     for message in consumer:
+#         socketio.emit('123', {'data': message.value})
 
-    @socketio.on('send_data')
-    def handle_send_data(data):
-        print(f"Received send_data: {data}")
-        response = f"Processed: {data['data']}"
-        socketio.emit('response_data', {'data': response})
+# def register_websocket_events(socketio):
+#     @socketio.on('123')
+#     def handle_connect():
+#         print('Client connected')
+#         global thread
+#         if thread is None:
+#             thread = socketio.start_background_task(target=background_thread)
+#         socketio.emit('123', {'data': 'Connected'})
 
