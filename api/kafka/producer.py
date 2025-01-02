@@ -65,7 +65,7 @@ def run_producer():
 def get_random_student():
     # 读取学生信息文件
     try:
-        with open('students.json', 'r', encoding='utf-8') as f:
+        with open('api\kafka\students.json', 'r', encoding='utf-8') as f:
             students = json.load(f)
 
         # 从学生列表中随机选择一个学生

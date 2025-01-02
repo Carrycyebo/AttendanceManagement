@@ -66,10 +66,20 @@ if __name__ == '__main__':
         .withColumn("status", F.split(F.col("value"), "\t")[4]) \
         .drop("value")
 
-    # 4- 数据统计
+    # 4- 数据统计 定义时间窗口
     # 按照 class_id, student_id, student_name, status 分组并统计数量
-    attendance_counts = parsed_stream.groupBy("class_id", "student_id", "student_name", "status") \
+    attendance_counts = parsed_stream \
+        .groupBy(
+            F.window(parsed_stream.timestamp, "2 seconds"),
+            parsed_stream.class_id,
+            parsed_stream.student_id,
+            parsed_stream.student_name,
+            parsed_stream.status
+        ) \
         .count()
+    
+    # attendance_counts = parsed_stream.groupBy("class_id", "student_id", "student_name", "status") \
+    #     .count()
 
     # 5- 使用 foreachBatch 将数据推送到 MySQL
     attendance_counts.writeStream \
