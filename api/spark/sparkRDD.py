@@ -66,11 +66,11 @@ def run_spark_RDD():
        .getOrCreate()
 
     # 2- 读取Kafka数据流，配置Kafka相关的参数，如指定Kafka的服务器地址（这里是"zhao:9092"），
-    # 以及要订阅的主题模式（这里是"test"，意味着会匹配符合这个模式的主题），然后加载数据为一个流形式的DataFrame
+    # 以及要订阅的主题模式（这里是"attendance"，意味着会匹配符合这个模式的主题），然后加载数据为一个流形式的DataFrame
     kafka_stream = spark.readStream \
        .format("kafka") \
        .option("kafka.bootstrap.servers", "zhao:9092") \
-       .option("subscribePattern", "test") \
+       .option("subscribePattern", "attendance") \
        .load()
 
     # 3- 解析Kafka数据，从Kafka读取到的原始数据中提取出需要的字段，并进行相应的列转换操作
