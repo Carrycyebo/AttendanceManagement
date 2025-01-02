@@ -22,7 +22,7 @@ def run_structured_streaming():
     kafka_stream = spark.readStream \
        .format("kafka") \
        .option("kafka.bootstrap.servers", "zhao:9092") \
-       .option("subscribePattern", "test") \
+       .option("subscribePattern", "attendance") \
        .load()
 
     # 3- 解析数据
