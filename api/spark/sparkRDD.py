@@ -4,20 +4,28 @@ from pyspark.sql import SparkSession
 from api.db.util import get_db
 import pyspark.sql.functions as F
 
-# os.environ['JAVA_HOME'] = 'C:\\Program Files\\Java\\jdk1.8.0_351'
+# 设置Hadoop环境变量，指定Hadoop的安装路径，以便后续Spark能够正确调用Hadoop相关功能
+# 注意这里如果Java环境有问题也需要类似设置JAVA_HOME，当前代码中注释掉了相关设置，可按需取消注释启用
 os.environ['HADOOP_HOME'] = 'C:\\hadoop-2.8.1'
 
-# 将结果写入 MySQL 的函数
+# 定义一个函数，用于将Spark DataFrame中的每一批数据写入到MySQL数据库中
 def write_to_mysql(batch_df, batch_id):
-    # 将 DataFrame 转换为 Pandas DataFrame
+    """
+    将每一批次的DataFrame数据写入到MySQL数据库的函数
+
+    参数:
+    batch_df (DataFrame): 当前批次的Spark DataFrame数据，包含要插入到MySQL的数据
+    batch_id: 批次的唯一标识（在这个场景中可能不一定会用到具体的值）
+    """
+    # 将Spark DataFrame转换为Pandas DataFrame，方便后续按行遍历数据进行插入操作
+    # Pandas DataFrame提供了类似Python列表那样方便的按行迭代方式，便于和MySQL的插入语句配合
     pandas_df = batch_df.toPandas()
-
-    # 连接 MySQL 数据库
+    # 建立与MySQL数据库的连接，指定主机地址、用户名、密码以及要使用的数据库名称
     connection = get_db()
-
+    # 创建游标对象，用于执行SQL语句
     cursor = connection.cursor()
 
-    # 插入数据到 MySQL
+    # 遍历Pandas DataFrame的每一行数据，提取相应的列值，并构造插入语句插入到MySQL数据库中
     for _, row in pandas_df.iterrows():
         class_id = row['class_id']
         student_id = row['student_id']
@@ -25,67 +33,89 @@ def write_to_mysql(batch_df, batch_id):
         status = row['status']
         count = row['count']
 
-        # 插入语句
+        # 构造插入数据到MySQL数据库的SQL语句
+        # 这里使用了ON DUPLICATE KEY UPDATE语句，意味着如果插入的数据行在表中已经存在（根据主键或唯一键判断），
+        # 那么就更新count字段的值，将原来的值加上新插入的值，实现数据的累计统计功能
         sql = """
         INSERT INTO student_attendance (class_id, student_id, student_name, status, count)
         VALUES (%s, %s, %s, %s, %s)
         ON DUPLICATE KEY UPDATE count = count + VALUES(count)
         """
+        # 使用游标执行SQL语句，将对应的数据插入到数据库中，传入的参数是要插入的具体值
         cursor.execute(sql, (class_id, student_id, student_name, status, count))
-    
-    # 提交事务并关闭连接
+
+    # 提交事务，将之前执行的插入/更新操作持久化到数据库中
     connection.commit()
+    # 关闭游标，释放相关资源
     cursor.close()
+    # 关闭数据库连接，释放连接资源
     connection.close()
 
+
 def run_spark_RDD():
-    # 1- 创建 SparkSession
+    """
+    主函数，用于执行整个Spark任务流程，包括创建SparkSession、读取Kafka数据、解析数据、统计数据以及将数据写入到MySQL数据库
+    """
+    # 1- 创建SparkSession对象，这是使用Spark的入口点，用于配置和启动Spark应用程序
+    # 设置了一些Spark相关的配置参数，比如设置shuffle分区数为1（可根据实际情况调整），
+    # 指定应用程序的名称为'ss_kafka_push_to_mysql'，并且以本地模式运行（使用本地所有可用的CPU核心）
     spark = SparkSession.builder \
-        .config("spark.sql.shuffle.partitions", 1) \
-        .appName('ss_kafka_push_to_mysql') \
-        .master('local[*]') \
-        .getOrCreate()
+       .config("spark.sql.shuffle.partitions", 1) \
+       .appName('ss_kafka_push_to_mysql') \
+       .master('local[*]') \
+       .getOrCreate()
 
-    # 2- 读取 Kafka 数据流
+    # 2- 读取Kafka数据流，配置Kafka相关的参数，如指定Kafka的服务器地址（这里是"zhao:9092"），
+    # 以及要订阅的主题模式（这里是"test"，意味着会匹配符合这个模式的主题），然后加载数据为一个流形式的DataFrame
     kafka_stream = spark.readStream \
-        .format("kafka") \
-        .option("kafka.bootstrap.servers", "zhao:9092") \
-        .option("subscribePattern", "test") \
-        .load()
+       .format("kafka") \
+       .option("kafka.bootstrap.servers", "zhao:9092") \
+       .option("subscribePattern", "test") \
+       .load()
 
-    # 3- 解析 Kafka 数据
+    # 3- 解析Kafka数据，从Kafka读取到的原始数据中提取出需要的字段，并进行相应的列转换操作
+    # 首先将Kafka消息中的value字段转换为字符串类型并命名为"value"，同时保留消息的时间戳字段"timestamp"
+    # 然后使用F.split函数按照制表符"\t"分割"value"字段，提取出各个部分并分别创建新的列，如class_id、student_name等，
+    # 最后删除原始的"value"列，因为已经提取出了其中有用的信息
     parsed_stream = kafka_stream.selectExpr("cast(value as string) as value", "timestamp") \
-        .withColumn("class_id", F.split(F.col("value"), "\t")[0]) \
-        .withColumn("student_name", F.split(F.col("value"), "\t")[1]) \
-        .withColumn("course", F.split(F.col("value"), "\t")[2]) \
-        .withColumn("student_id", F.split(F.col("value"), "\t")[3]) \
-        .withColumn("status", F.split(F.col("value"), "\t")[4]) \
-        .drop("value")
+       .withColumn("class_id", F.split(F.col("value"), "\t")[0]) \
+       .withColumn("student_name", F.split(F.col("value"), "\t")[1]) \
+       .withColumn("course", F.split(F.col("value"), "\t")[2]) \
+       .withColumn("student_id", F.split(F.col("value"), "\t")[3]) \
+       .withColumn("status", F.split(F.col("value"), "\t")[4]) \
+       .drop("value")
 
-    # 4- 数据统计 定义时间窗口
-    # 按照 class_id, student_id, student_name, status 分组并统计数量
+    # 4- 数据统计，定义时间窗口，按照指定的一组列（class_id、student_id、student_name、status以及一个基于时间戳的时间窗口）进行分组，
+    # 然后对每个分组内的数据进行计数，统计在每个时间窗口内，符合各个分组条件的数据出现的次数
+    # 这里使用了F.window函数基于时间戳字段创建了一个2秒的时间窗口，意味着每2秒的数据会被划分到一个窗口内进行统计
     attendance_counts = parsed_stream \
-        .groupBy(
+       .groupBy(
             F.window(parsed_stream.timestamp, "2 seconds"),
             parsed_stream.class_id,
             parsed_stream.student_id,
             parsed_stream.student_name,
             parsed_stream.status
         ) \
-        .count()
-    
+       .count()
+
+    # 以下是另一种分组统计的方式，只是简单地按照class_id、student_id、student_name、status这几个字段进行分组计数，
+    # 没有考虑时间窗口的因素，如果不需要基于时间窗口统计，可以使用这种方式替代上面的分组统计
     # attendance_counts = parsed_stream.groupBy("class_id", "student_id", "student_name", "status") \
-    #     .count()
+    #    .count()
 
-    # 5- 使用 foreachBatch 将数据推送到 MySQL
+    # 5- 使用foreachBatch操作，将统计好的数据推送到MySQL数据库中
+    # 指定输出模式为"update"，意味着每次有新的数据更新时，会相应地更新输出结果（这里对应写入到MySQL的数据更新）
+    # 设置触发间隔为每2秒触发一次数据处理和写入操作，确保数据能按照一定的时间节奏进行处理和持久化
+    # 最后启动流计算任务，使其开始运行
     attendance_counts.writeStream \
-        .foreachBatch(write_to_mysql) \
-        .outputMode("update") \
-        .trigger(processingTime="2 seconds") \
-        .start()
+       .foreachBatch(write_to_mysql) \
+       .outputMode("update") \
+       .trigger(processingTime="2 seconds") \
+       .start()
 
-    # 等待流任务结束
+    # 让Spark应用程序等待，直到流任务结束（比如手动停止或者出现异常结束等情况），保持程序运行状态，持续处理数据
     spark.streams.awaitAnyTermination()
+
 
 if __name__ == '__main__':
     run_spark_RDD()
