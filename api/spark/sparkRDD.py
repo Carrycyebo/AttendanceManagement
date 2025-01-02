@@ -42,7 +42,7 @@ def write_to_mysql(batch_df, batch_id):
     cursor.close()
     connection.close()
 
-if __name__ == '__main__':
+def run_spark_RDD():
     # 1- 创建 SparkSession
     spark = SparkSession.builder \
         .config("spark.sql.shuffle.partitions", 1) \
@@ -90,3 +90,6 @@ if __name__ == '__main__':
 
     # 等待流任务结束
     spark.streams.awaitAnyTermination()
+
+if __name__ == '__main__':
+    run_spark_RDD()

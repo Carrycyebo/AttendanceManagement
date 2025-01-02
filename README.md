@@ -1,59 +1,57 @@
 # 考勤信息实时统计系统
 
 #### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+基于Spark、Kafka、MySQL、Flask、WebSocket、bootstarp、highcharts的实时考勤信息统计系统。
 
-#### 软件架构
-软件架构说明
+##### 模块一
+Kafka data real-time production (kafka 数据实时生产)
+这个模块主要用来模拟在实时的业务系统中，用户数据是实时生产的,并推送到kafka 相应的主题中。
 
+##### 模块二
+Structured Streaming data processing (Structured Streaming 数据处理)
+Spark
+这个模块主要用来实时处理kafka中主题的数据，并将处理后的数据写入新的topic（实时处理）到MySQL（需要持久化的数据）中。
 
-#### 使用说明
+##### 模块三
+Flask web service (Flask web 服务)
+这个模块主要用来提供web服务，用户可以通过web服务来查看实时考勤信息。
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+##### 模块四
+WebSocket real-time data transmission (WebSocket 实时数据传输)
+这个模块主要用来实时传输考勤信息，用户可以通过WebSocket来实时接收考勤信息。
 
-#### 参与贡献
+#### 模块五
+Highcharts real-time data visualization (Highcharts 实时数据可视化)
+这个模块主要用来实时展示考勤信息，用户可以通过Highcharts来实时展示考勤信息。
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
 
 
 
+#### 软件架构
 ```
 AttendanceManagement
 ├─ api
 │  ├─ db
-│  │  ├─ util.py
+│  │  └─ util.py
 │  ├─ kafka
 │  │  ├─ consumer.py
 │  │  ├─ producer.py
+│  │  ├─ students.json
 │  │  ├─ util.py
-│  ├─ rounter
+│  ├─ router
 │  │  ├─ app.py.old
 │  │  ├─ page.py
-│  │  ├─ websocket.py
+│  │  └─ websocket.py
+│  ├─ service
+│  │  ├─ kafka_service.py
+│  │  ├─ mysql_service.py
+│  │  └─ websocket_service.py
 │  └─ spark
 │     ├─ sparkRDD.py
 │     ├─ sparksql.py
-│     ├─ sparktest.py
 │     └─ structured_streaming.py
 ├─ conf
-│  ├─ getConf.py
+│  └─ getConf.py
 ├─ config
 │  └─ default.ini
 ├─ main.py
@@ -64,18 +62,69 @@ AttendanceManagement
 ├─ test.py
 ├─ web
 │  ├─ static
+│  │  ├─ bootstrap-4.6.2-dist
+│  │  │  ├─ css
+│  │  │  │  └─ bootstrap.min.css
+│  │  │  └─ js
+│  │  │     └─ bootstrap.min.js
 │  │  ├─ css
 │  │  │  └─ style.css
 │  │  ├─ img
+│  │  │  └─ bg.jpg
 │  │  └─ js
+│  │     ├─ charts.js
 │  │     ├─ exporting.js
 │  │     ├─ highcharts.js
 │  │     ├─ jquery-3.1.1.min.js
+│  │     ├─ popper.min.js
 │  │     ├─ socket.io.js
 │  │     └─ socket.io.js.map
 │  └─ templates
-│     ├─ index.html
-│     ├─ index.html.old
-│     └─ index1.html.old
-├─ __init__.py
+│     └─ index.html
+└─ __init__.py
+
 ```
+
+
+
+#### 使用说明
+
+通过requirements.txt.安装依赖包
+```
+pip install -r requirements.txt
+```
+
+##### 模块一
+```
+python run_producer.py
+```
+
+##### 模块二
+```
+python run_spark.py
+```
+
+##### 模块三
+```
+python run_flask.py
+```
+
+##### 模块四
+```
+python run_websocket.py
+```
+
+##### 模块五
+```
+python run_highcharts.py
+```
+
+
+#### 参与贡献
+
+1.  Fork 本仓库
+2.  新建 Feat_xxx 分支
+3.  提交代码
+
+
+

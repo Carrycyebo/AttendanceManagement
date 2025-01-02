@@ -5,7 +5,7 @@ import pyspark.sql.functions as F
 # os.environ['JAVA_HOME'] = 'C:\\Program Files\\Java\\jdk1.8.0_351'
 os.environ['HADOOP_HOME'] = 'C:\\hadoop-2.8.1'
 
-if __name__ == '__main__':
+def run_structured_streaming():
     # 1- 创建 SparkSession
     spark = SparkSession.builder \
         .config("spark.sql.shuffle.partitions", 1) \
@@ -86,3 +86,6 @@ if __name__ == '__main__':
 
     # 等待流任务结束
     spark.streams.awaitAnyTermination()
+
+if __name__ == "__main__":
+    run_structured_streaming()
