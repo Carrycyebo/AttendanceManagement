@@ -1,26 +1,60 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    padding: 0;
-}
+    /* 插入背景图片 */
+    body {
+        background: url('../img/bg.jpg') no-repeat center center fixed;
+        background-size: cover;
+        color: white;
+        font-family: 'Open Sans', sans-serif;
+    }
 
-h1 {
-    color: #333;
-}
+    /* 使页面中的图表容器适应视口 */
+    .chart-container {
+        height: 40vh; /* 默认高度 */
+        margin: 0 auto;
+        background: rgba(0, 0, 0, 0.4);
+        padding: 1vw;
+        border-radius: 2vw;
+    }
 
-#response {
-    margin-top: 20px;
-}
+    .chart-container-bing {
+        height: 40vh; /* 默认高度 */
+        margin: 0 auto;
+        background: rgba(0, 0, 0, 0.4);
+        padding: 1vw;
+        border-radius: 2vw;
+    }
 
-#messages {
-    list-style: none;
-    padding: 0;
-}
+    /* 标题样式 */
+    .page-title {
+        font-size: 2vw; /* 动态根据视口宽度调整字体 */
+        font-weight: bold;
+        margin-bottom: 4vh;
+    }
 
-#messages li {
-    margin-bottom: 5px;
-    padding: 10px;
-    background-color: #f1f1f1;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
+    .section-title {
+        font-size: 2vw; /* 动态根据视口宽度调整字体 */
+        font-weight: bold;
+        margin-bottom: 3vh;
+    }
+
+    /* 图表行间距 */
+    .chart-row {
+        margin-bottom: 4vh;
+    }
+
+    /* 饼图每列宽度 */
+    .pie-chart-col {
+        margin-bottom: 0vh;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 5vw; /* 小屏幕时标题更小 */
+        }
+        .section-title {
+            font-size: 4vw;
+        }
+        .chart-container {
+            height: 35vh; /* 小屏幕时增大图表高度 */
+        }
+    }

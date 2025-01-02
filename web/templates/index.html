@@ -1,312 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Data Display</title>
+    <title>考勤信息实时统计系统</title>
+    <link href="static/bootstrap-4.6.2-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/style.css">
     <script src="static/js/socket.io.js"></script>
     <script src="static/js/jquery-3.1.1.min.js"></script>
+    <script src="static/bootstrap-4.6.2-dist/js/bootstrap.min.js"></script>
+    <script src="static/js/popper.min.js"></script>
     <script src="static/js/highcharts.js"></script>
     <script src="static/js/exporting.js"></script>
-    <script type="text/javascript">
-        // 连接到 Flask-SocketIO 服务
-        var socket = io.connect('http://' + document.domain + ':' + location.port);
+    <script src="static/js/charts.js"></script>
 
-        // 数据存储
-        var attendanceSummaryData = { A: 0, L: 0 };
-        var classAttendanceData = {};
-        var courseCountData = {};
-        var courseAttendanceData = {};
-        var studentAttendanceData = {};
-
-        // 图表对象
-        var attendanceSummaryChart, classAttendanceChart, courseCountChart, courseAttendanceChart;
-
-        // WebSocket 消息监听
-        socket.on('attendance_summary_message', function(data) {
-            attendanceSummaryData.A = data.data.status === "A" ? data.data.count : attendanceSummaryData.A;
-            attendanceSummaryData.L = data.data.status === "L" ? data.data.count : attendanceSummaryData.L;
-            updateAttendanceSummaryChart();
-        });
-
-        socket.on('class_attendance_message', function(data) {
-            classAttendanceData[data.data.class_id] = {
-                status: data.data.status,
-                count: data.data.count
-            };
-            updateClassAttendanceChart();
-        });
-
-        socket.on('course_count_message', function(data) {
-            courseCountData[data.data.course] = data.data.course_count;
-            updateCourseCountChart();
-        });
-
-        socket.on('course_attendance_data', function(data) {
-            data.data.forEach(function(item) {
-                courseAttendanceData[item.course] = courseAttendanceData[item.course] || {};
-                courseAttendanceData[item.course][item.status] = item.count;
-            });
-            updateCourseAttendanceChart();
-        });
-
-        socket.on('student_attendance_data', function(data) {
-            studentAttendanceData = {};
-            data.data.forEach(function(item) {
-                var classId = item.class_id;
-                if (!studentAttendanceData[classId]) {
-                    studentAttendanceData[classId] = {};
-                }
-                var studentName = item.student_name + ' (' + item.student_id + ')';
-                if (!studentAttendanceData[classId][studentName]) {
-                    studentAttendanceData[classId][studentName] = { A: 0, L: 0 };
-                }
-                studentAttendanceData[classId][studentName][item.status] += item.count;
-            });
-            updateStudentAttendanceCharts();
-        });
-
-        // 初始化和更新图表函数
-        function initializeAttendanceSummaryChart() {
-    // 禁用 UTC 时间
-    Highcharts.setOptions({
-        global: {
-            useUTC: false
-        }
-    });
-
-    attendanceSummaryChart = Highcharts.chart('attendanceSummaryChart', {
-        chart: {
-            type: 'spline',
-            animation: Highcharts.svg, // 动画效果
-            marginRight: 10,
-            events: {
-                load: function () {
-                    // 定时更新数据
-                    const series1 = this.series[0];
-                    const series2 = this.series[1];
-                    setInterval(function () {
-                        const x = (new Date()).getTime(); // 当前时间
-                        const attendanceCount = attendanceSummaryData.A;
-                        const absenceCount = attendanceSummaryData.L;
-
-                        // 更新系列数据
-                        series1.addPoint([x, attendanceCount], true, true);
-                        series2.addPoint([x, absenceCount], true, true);
-                    }, 2000); // 每秒更新
-                }
-            }
-        },
-        title: {
-            text: 'All Students Attendance Summary (Over Time)'
-        },
-        xAxis: {
-            type: 'datetime',
-            tickPixelInterval: 50 // 动态调整刻度
-        },
-        yAxis: {
-            title: {
-                text: 'Count'
-            },
-            min: 0,
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {
-            formatter: function () {
-                return (
-                    '<b>' + this.series.name + '</b><br/>' +
-                    Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
-                    Highcharts.numberFormat(this.y, 2)
-                );
-            }
-        },
-        legend: {
-            enabled: true
-        },
-        exporting: {
-            enabled: true
-        },
-        series: [{
-            name: 'Attendance',
-            data: (function () {
-                const data = [];
-                const time = (new Date()).getTime();
-                for (let i = -19; i <= 0; i += 1) {
-                    data.push({
-                        x: time + i * 2000,
-                        y: 0 // 初始数据为 0
-                    });
-                }
-                return data;
-            })()
-        },
-        {
-            name: 'Absence',
-            data: (function () {
-                const data = [];
-                const time = (new Date()).getTime();
-                for (let i = -19; i <= 0; i += 1) {
-                    data.push({
-                        x: time + i * 2000,
-                        y: 0 // 初始数据为 0
-                    });
-                }
-                return data;
-            })()
-        }]
-    });
-}
-
-function updateAttendanceSummaryChart() {
-    if (!attendanceSummaryChart) {
-        initializeAttendanceSummaryChart();
-    }
-    const now = new Date().getTime();
-    const attendanceCount = attendanceSummaryData.A;
-    const absenceCount = attendanceSummaryData.L;
-
-    // 添加新数据点到图表
-    attendanceSummaryChart.series[0].addPoint([now, attendanceCount], true, false);
-    attendanceSummaryChart.series[1].addPoint([now, absenceCount], true, false);
-}
-
-        function initializeClassAttendanceChart() {
-            classAttendanceChart = Highcharts.chart('classAttendanceChart', {
-                chart: { type: 'bar' },
-                title: { text: 'Class Attendance' },
-                xAxis: { categories: [] },
-                yAxis: { title: { text: 'Count' } },
-                series: [{
-                    name: 'Attendance',
-                    data: []
-                }, {
-                    name: 'Absence',
-                    data: []
-                }]
-            });
-        }
-
-        function updateClassAttendanceChart() {
-            var categories = Object.keys(classAttendanceData);
-            var attendanceData = categories.map(classId => classAttendanceData[classId].status === 'A' ? classAttendanceData[classId].count : 0);
-            var absenceData = categories.map(classId => classAttendanceData[classId].status === 'L' ? classAttendanceData[classId].count : 0);
-            if (classAttendanceChart) {
-                classAttendanceChart.xAxis[0].setCategories(categories);
-                classAttendanceChart.series[0].setData(attendanceData);
-                classAttendanceChart.series[1].setData(absenceData);
-            } else {
-                initializeClassAttendanceChart();
-            }
-        }
-
-        function initializeCourseCountChart() {
-            courseCountChart = Highcharts.chart('courseCountChart', {
-                chart: { type: 'column' },
-                title: { text: 'Course Count' },
-                xAxis: { categories: [] },
-                series: [{
-                    name: 'Count',
-                    data: []
-                }]
-            });
-        }
-
-        function updateCourseCountChart() {
-            var categories = Object.keys(courseCountData);
-            var data = categories.map(course => courseCountData[course]);
-            if (courseCountChart) {
-                courseCountChart.xAxis[0].setCategories(categories);
-                courseCountChart.series[0].setData(data);
-            } else {
-                initializeCourseCountChart();
-            }
-        }
-
-        function initializeCourseAttendanceChart() {
-            courseAttendanceChart = Highcharts.chart('courseAttendanceChart', {
-                chart: { type: 'bar' },
-                title: { text: 'Course Attendance' },
-                xAxis: { categories: [] },
-                yAxis: { title: { text: 'Count' } },
-                series: [{
-                    name: 'Attendance',
-                    data: []
-                }, {
-                    name: 'Absence',
-                    data: []
-                }]
-            });
-        }
-
-        function updateCourseAttendanceChart() {
-            var categories = Object.keys(courseAttendanceData);
-            var attendanceData = categories.map(course => courseAttendanceData[course].A || 0);
-            var absenceData = categories.map(course => courseAttendanceData[course].L || 0);
-            if (courseAttendanceChart) {
-                courseAttendanceChart.xAxis[0].setCategories(categories);
-                courseAttendanceChart.series[0].setData(attendanceData);
-                courseAttendanceChart.series[1].setData(absenceData);
-            } else {
-                initializeCourseAttendanceChart();
-            }
-        }
-
-        function updateStudentAttendanceCharts() {
-            for (var classId in studentAttendanceData) {
-                var classData = studentAttendanceData[classId];
-                var attendanceData = Object.keys(classData).map(student => ({ name: student, y: classData[student].A }));
-                var absenceData = Object.keys(classData).map(student => ({ name: student, y: classData[student].L }));
-
-                Highcharts.chart('studentAttendanceChart_' + classId + '_A', {
-                    chart: { type: 'pie' },
-                    title: { text: `Class ${classId} - Attendance` },
-                    series: [{
-                        name: 'Attendance',
-                        data: attendanceData
-                    }]
-                });
-
-                Highcharts.chart('studentAttendanceChart_' + classId + '_L', {
-                    chart: { type: 'pie' },
-                    title: { text: `Class ${classId} - Absence` },
-                    series: [{
-                        name: 'Absence',
-                        data: absenceData
-                    }]
-                });
-            }
-        }
-
-        $(document).ready(function() {
-            initializeAttendanceSummaryChart();
-            initializeClassAttendanceChart();
-            initializeCourseCountChart();
-            initializeCourseAttendanceChart();
-        });
-    </script>
 </head>
 <body>
-    <h1>WebSocket Data Display</h1>
-    <h2>All Students Attendance Summary</h2>
-    <div id="attendanceSummaryChart" style="width:100%; height:400px;"></div>
-    <h2>Class Attendance</h2>
-    <div id="classAttendanceChart" style="width:100%; height:400px;"></div>
-    <h2>Course Count</h2>
-    <div id="courseCountChart" style="width:100%; height:400px;"></div>
-    <h2>Course Attendance</h2>
-    <div id="courseAttendanceChart" style="width:100%; height:400px;"></div>
-    <h2>Student Attendance (Pie Charts)</h2>
-    <div id="studentAttendanceChart_220713_A" style="width:100%; height:400px;"></div>
-    <div id="studentAttendanceChart_220713_L" style="width:100%; height:400px;"></div>
-    <div id="studentAttendanceChart_220714_A" style="width:100%; height:400px;"></div>
-    <div id="studentAttendanceChart_220714_L" style="width:100%; height:400px;"></div>
-    <div id="studentAttendanceChart_220715_A" style="width:100%; height:400px;"></div>
-    <div id="studentAttendanceChart_220715_L" style="width:100%; height:400px;"></div>
-    <div id="studentAttendanceChart_220716_A" style="width:100%; height:400px;"></div>
-    <div id="studentAttendanceChart_220716_L" style="width:100%; height:400px;"></div>
+    <div class="container-fluid mt-5">
+        <h1 class="text-center page-title">考勤信息实时统计</h1>
+
+        <!-- 出勤汇总 -->
+        <div class="row chart-row">
+            <div class="col-md-6 col-12">
+                <div id="attendanceSummaryChart" class="chart-container"></div>
+            </div>
+            <div class="col-md-6 col-12">
+                <div id="classAttendanceChart" class="chart-container"></div>
+            </div>
+        </div>
+
+        <!-- 课程统计 -->
+        <div class="row chart-row">
+            <div class="col-md-6 col-12">
+                <div id="courseCountChart" class="chart-container"></div>
+            </div>
+            <div class="col-md-6 col-12">
+                <div id="courseAttendanceChart" class="chart-container"></div>
+            </div>
+        </div>
+
+        <!-- 学生出勤（饼图） -->
+        <div class="section-title text-center">各班学生出勤统计</div>
+        <div class="row chart-row">
+            <div class="col-md-3 col-12">
+                <div id="studentAttendanceChart_220713_A" class="chart-container-bing"></div>
+            </div>
+            <div class="col-md-3 col-12">
+                <div id="studentAttendanceChart_220714_A" class="chart-container-bing"></div>
+            </div>
+            <div class="col-md-3 col-12">
+                <div id="studentAttendanceChart_220715_A" class="chart-container-bing"></div>
+            </div>
+            <div class="col-md-3 col-12">
+                <div id="studentAttendanceChart_220716_A" class="chart-container-bing"></div>
+            </div>
+        </div>
+        <div class="row chart-row">
+            <div class="col-md-3 col-12">
+                <div id="studentAttendanceChart_220713_L" class="chart-container-bing"></div>
+            </div>
+            <div class="col-md-3 col-12">
+                <div id="studentAttendanceChart_220714_L" class="chart-container-bing"></div>
+            </div>
+            <div class="col-md-3 col-12">
+                <div id="studentAttendanceChart_220715_L" class="chart-container-bing"></div>
+            </div>
+            <div class="col-md-3 col-12">
+                <div id="studentAttendanceChart_220716_L" class="chart-container-bing"></div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
