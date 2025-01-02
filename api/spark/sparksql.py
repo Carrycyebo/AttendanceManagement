@@ -1,6 +1,7 @@
 import os
 import pymysql
 from pyspark.sql import SparkSession
+from api.db.util import get_db
 import pyspark.sql.functions as F
 from pyspark.sql.window import Window
 from pyspark.sql.streaming import DataStreamWriter
@@ -13,12 +14,7 @@ def write_to_mysql(batch_df, batch_id):
     pandas_df = batch_df.toPandas()
 
     # 连接 MySQL 数据库
-    connection = pymysql.connect(
-        host='43.140.205.103',
-        user='AttendanceManagement',
-        password='cen5CjQpeSKxAWSZ',
-        database='AttendanceManagement'
-    )
+    connection = get_db()
 
     cursor = connection.cursor()
 
