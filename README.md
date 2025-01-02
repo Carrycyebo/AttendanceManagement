@@ -15,16 +15,10 @@ Spark
 ##### 模块三
 Flask web service (Flask web 服务)
 这个模块主要用来提供web服务，用户可以通过web服务来查看实时考勤信息。
-
-##### 模块四
-WebSocket real-time data transmission (WebSocket 实时数据传输)
-这个模块主要用来实时传输考勤信息，用户可以通过WebSocket来实时接收考勤信息。
-
-#### 模块五
-Highcharts real-time data visualization (Highcharts 实时数据可视化)
-这个模块主要用来实时展示考勤信息，用户可以通过Highcharts来实时展示考勤信息。
-
-
+用Highcharts real-time data visualization (Highcharts 实时数据可视化)
+来实时展示考勤信息，用户可以通过Highcharts来实时展示考勤信息。
+用WebSocket real-time data transmission (WebSocket 持续数据传输)
+来实时传输考勤信息，用户可以通过WebSocket来实时接收考勤信息。
 
 
 #### 软件架构
@@ -89,7 +83,7 @@ AttendanceManagement
 
 #### 使用说明
 
-通过requirements.txt.安装依赖包
+通过requirements.txt.安装依赖包，自行安装pyspark包
 ```
 pip install -r requirements.txt
 ```
@@ -109,22 +103,18 @@ python run_spark.py
 python run_flask.py
 ```
 
-##### 模块四
-```
-python run_websocket.py
-```
+#### 特点
+-多模块化，每个模块负责不同的功能，方便维护和扩展。
 
-##### 模块五
-```
-python run_highcharts.py
-```
+-使用Structured Streaming实时处理kafka中的数据，相比于Spark Streaming， Structured Streaming更加简洁和易用。而且，Structured Streaming支持SQL查询，可以方便地查询和处理数据。
 
+-使用Flask提供web服务，用户可以通过web服务来查看实时考勤信息。
 
-#### 参与贡献
+-使用Highcharts实时数据可视化，用户可以通过Highcharts来实时展示考勤信息。
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
+-使用WebSocket实时数据传输，建立持久化连接。
 
 
-
+#### 不足
+-受服务器资源限制，本次kafka均为单节点部署。
+-由于计算资源限制，本次Structured Streaming运行时，如设置2s的batch interval，运行时计算会滞后，实际滞后时间就计算机性能而议
