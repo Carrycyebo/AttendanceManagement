@@ -15,27 +15,25 @@ producer = create_producer()
 topic = get_producer_topic()
 
 def send_data():
-    # State and Course List
+    #状态和课程列表
     state_array = ["A", "L"]  # A: 出勤, L: 缺勤
     course_array = ["Hadoop", "Spark", "Flink", "Hive", "HBase", "Kafka"]
     
     data_batch = []  # List to store the batch of data
 
-    # Generate 5 records in a batch
+    # 在循环中生成5个数据,作为一个记录
     for i in range(5):
-        # Weighted random choice for state, "A" has higher probability than "L"
-        state = "A" if random.random() < 0.8 else "L"  # 80% chance for "A" and 20% for "L"
-        
+        #将出勤概率设置为百分之八十，缺勤为百分之二十
+        state = "A" if random.random() < 0.8 else "L"
         course = random.choice(course_array)
 
-        # Randomly choose a student from the list
+        #从列表中随机选择一名学生
         student = get_random_student()
 
-        if student:  # Check if student is not None or empty
-            # Format data as required
+        if student:  # 检查学生是空还是没有
             data_batch.append('\t'.join([student[0], student[1], course, student[2], state]))
         else:
-            print("Failed to get random student, skipping record.")
+            print("生成失败")
     
     return data_batch
 
@@ -44,20 +42,19 @@ def run_producer():
 
     i = 0
     while True:
-        # Generate a batch of 5 random data records
+        #随机生成数据
         data_batch = send_data()
 
-        if data_batch:  # Only send data if the batch is not empty
-            # Send the batch to Kafka
+        if data_batch:  #批处理不为空时
             for data in data_batch:
                 producer.send(topic, value=data.encode('utf-8'))
 
-            # Print sent data
+            # 输出已经发送的数据
             print(f"Sent Batch {i}: {data_batch}")
         else:
             print(f"Batch {i} is empty. Skipping sending.")
 
-        # Sleep before sending the next batch of data
+        # 等5s
         time.sleep(5)
         i += 1
 
