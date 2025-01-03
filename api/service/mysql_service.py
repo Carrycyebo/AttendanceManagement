@@ -1,20 +1,13 @@
 from pymysql import connect
 import pymysql
 from conf import getConf
+from api.db.util import get_db
 
 conf = getConf.conf()
 
-def get_mysql_connection():
-    return connect(
-        host=conf.get('database', 'host'),
-        user=conf.get('database', 'user'),
-        password=conf.get('database', 'password'),
-        database=conf.get('database', 'database'),
-        charset=conf.get('database', 'charset')
-    )
 
 def query_mysql_data():
-    connection = get_mysql_connection()
+    connection = get_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
     course_attendance_query = "SELECT * FROM course_attendance;"
