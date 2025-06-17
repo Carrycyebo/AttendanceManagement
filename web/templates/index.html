@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +16,7 @@
     <script src="static/js/charts.js"></script>
 
 </head>
+
 <body>
     <div class="container-fluid mt-5">
         <h1 class="text-center page-title">考勤信息实时统计</h1>
@@ -69,6 +71,45 @@
                 <div id="studentAttendanceChart_220716_L" class="chart-container-bing"></div>
             </div>
         </div>
-    </div>
+        <div class="section-title text-center mt-5">离线推荐与分析</div>
+
+        <div class="row chart-row">
+            <!-- 缺勤最多的学生 -->
+            <div class="col-md-6 col-12">
+                <div id="mostAbsentStudentsChart" class="chart-container"></div>
+            </div>
+
+            <!-- 个性化推荐缺勤名单 -->
+            <div class="col-md-6 col-12">
+                <div id="personalRecommendationsChart" class="chart-container"></div>
+            </div>
+        </div>
+
+        <div class="row chart-row">
+            <!-- 左侧列：学生缺勤课程预测 + 每门课程缺勤 Top5 -->
+            <div class="col-md-12 col-12">
+                <!-- 学生缺勤课程预测表格 -->
+                <h4 class="text-center mt-3">学生缺勤课程预测</h4>
+                <div id="studentAbsencePredictionsTable" class="table-container"></div>
+
+                <!-- 每门课程缺勤 Top5 表格 -->
+                <h4 class="text-center mt-4">每门课程缺勤 Top5 学生</h4>
+                <div id="topAbsentPerCourseTable" class="table-container"></div>
+            </div>
+
+            <!-- 右侧列（可用于其他内容或留空） -->
+
+        </div>
+
+        <div class="row chart-row">
+            <!-- 协同过滤推荐结果表格 -->
+            <div class="col-12">
+                <h4 class="text-center mt-3">协同过滤推荐结果</h4>
+                <div id="userRecommendationsTable" class="table-container"></div>
+            </div>
+        </div>
+
+        <script src="static/js/chart2.js"></script>
 </body>
+
 </html>

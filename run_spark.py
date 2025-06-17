@@ -10,12 +10,12 @@ os.environ['HADOOP_HOME'] = 'C:\\hadoop-2.8.1'
 
 def start_spark():
 
-    # p1 = multiprocessing.Process(target=run_structured_streaming)
+    p1 = multiprocessing.Process(target=run_structured_streaming)
     p2 = multiprocessing.Process(target=run_spark_sql)
-    # p3 = multiprocessing.Process(target=run_spark_RDD)
-    # p1.start()
+    p3 = multiprocessing.Process(target=run_spark_RDD)
+    p1.start()
     p2.start()
-    # p3.start()
+    p3.start()
 
 if __name__ == '__main__':
     start_spark()

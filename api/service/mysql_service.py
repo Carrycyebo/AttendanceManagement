@@ -22,3 +22,53 @@ def query_mysql_data():
     connection.close()
 
     return course_attendance_data, student_attendance_data
+
+def get_most_absent_students():
+    connection = get_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    query = "SELECT * FROM most_absent_students ORDER BY total_absences DESC LIMIT 3;"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return data
+
+def get_personal_absent_recommendations():
+    connection = get_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    query = "SELECT * FROM personal_absent_recommendations LIMIT 6;"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return data
+
+def get_student_absence_predictions():
+    connection = get_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    query = "SELECT * FROM student_absence_predictions;"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return data
+
+def get_top_absent_per_course():
+    connection = get_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    query = "SELECT * FROM top_absent_per_course WHERE absence_rank <= 5;"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return data
+
+def get_user_recommendations():
+    connection = get_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    query = "SELECT * FROM user_recommendations;"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return data
