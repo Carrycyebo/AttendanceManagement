@@ -52,48 +52,48 @@ def write_to_mysql(batch_df, batch_id):
     # 关闭数据库连接，释放连接资源
     connection.close()
 
-def write_comprehensive_stats(batch_df, batch_id):
-        """
-        写入综合统计数据到新表
-        """
-        # 学生维度统计
-        student_stats = batch_df.groupBy(
-            "student_id", 
-            "student_name", 
-            "class_id", 
-            "status"
-        ).agg(F.sum("count").alias("total_count"))
+# def write_comprehensive_stats(batch_df, batch_id):
+#         """
+#         写入综合统计数据到新表
+#         """
+#         # 学生维度统计
+#         student_stats = batch_df.groupBy(
+#             "student_id", 
+#             "student_name", 
+#             "class_id", 
+#             "status"
+#         ).agg(F.sum("count").alias("total_count"))
         
-        # 使用现有get_db()方法写入
-        connection = get_db()
-        cursor = connection.cursor()
+#         # 使用现有get_db()方法写入
+#         connection = get_db()
+#         cursor = connection.cursor()
         
-        for row in student_stats.collect():
-            sql = """
-            INSERT INTO student_stats 
-            (student_id, student_name, class_id, 
-             attendance_count, absence_count, score)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE
-                attendance_count = attendance_count + VALUES(attendance_count),
-                absence_count = absence_count + VALUES(absence_count),
-                score = score + VALUES(score)  # 添加这行使score也能累加
-            """
-            # 根据状态更新不同字段
-            if row['status'] == 'A':
-                cursor.execute(sql, (
-                    row['student_id'], row['student_name'], row['class_id'],
-                    row['total_count'], 0, row['total_count']*100
-                ))
-            else:
-                cursor.execute(sql, (
-                    row['student_id'], row['student_name'], row['class_id'],
-                    0, row['total_count'], 0
-                ))
+#         for row in student_stats.collect():
+#             sql = """
+#             INSERT INTO student_stats 
+#             (student_id, student_name, class_id, 
+#              attendance_count, absence_count, score)
+#             VALUES (%s, %s, %s, %s, %s, %s)
+#             ON DUPLICATE KEY UPDATE
+#                 attendance_count = attendance_count + VALUES(attendance_count),
+#                 absence_count = absence_count + VALUES(absence_count),
+#                 score = score + VALUES(score)  # 添加这行使score也能累加
+#             """
+#             # 根据状态更新不同字段
+#             if row['status'] == 'A':
+#                 cursor.execute(sql, (
+#                     row['student_id'], row['student_name'], row['class_id'],
+#                     row['total_count'], 0, row['total_count']*100
+#                 ))
+#             else:
+#                 cursor.execute(sql, (
+#                     row['student_id'], row['student_name'], row['class_id'],
+#                     0, row['total_count'], 0
+#                 ))
         
-        connection.commit()
-        cursor.close()
-        connection.close()
+#         connection.commit()
+#         cursor.close()
+#         connection.close()
 
 
 def run_spark_RDD():
@@ -144,11 +144,11 @@ def run_spark_RDD():
        .start()
 
        # 在原有writeStream后添加新处理
-    attendance_counts.writeStream \
-       .foreachBatch(write_comprehensive_stats) \
-       .outputMode("update") \
-       .trigger(processingTime="2 seconds") \
-       .start()
+    # attendance_counts.writeStream \
+    #    .foreachBatch(write_comprehensive_stats) \
+    #    .outputMode("update") \
+    #    .trigger(processingTime="2 seconds") \
+    #    .start()
 
     # 让Spark应用程序等待，直到流任务结束（比如手动停止或者出现异常结束等情况），保持程序运行状态，持续处理数据
     spark.streams.awaitAnyTermination()

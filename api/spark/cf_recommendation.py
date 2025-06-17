@@ -1,61 +1,48 @@
+from pyspark.ml.feature import StringIndexer
 from pyspark.ml.recommendation import ALS
-
+from pyspark.sql.functions import col, explode
 
 def generate_user_based_recommendations(df):
+    # 只保留需要的列，并重命名 score 为 rating
     rating_df = df.select("student_id", "course", "score").withColumnRenamed("score", "rating")
+
+    # Step 1: 映射 student_id -> user_id_numeric
+    user_indexer = StringIndexer(inputCol="student_id", outputCol="user_id_numeric")
+    indexed_by_user = user_indexer.fit(rating_df).transform(rating_df)
+
+    # Step 2: 映射 course -> course_id_numeric
+    course_indexer = StringIndexer(inputCol="course", outputCol="course_id_numeric")
+    indexed_rating_df = course_indexer.fit(indexed_by_user).transform(indexed_by_user)
+
+    # 构建 ALS 模型
     als = ALS(
         maxIter=5,
         regParam=0.01,
-        userCol="student_id",
-        itemCol="course",
-        ratingCol="rating"
-    )
-    model = als.fit(rating_df)
-    recommendations = model.recommendForAllUsers(6)  # 每个用户推荐6门课
-    return recommendations
-
-
-def build_course_similarity_matrix(df):
-    from pyspark.sql.functions import col
-    from pyspark.ml.feature import StringIndexer
-    from pyspark.ml.linalg import Vectors
-    from pyspark.ml.feature import VectorAssembler
-    from pyspark.ml.recommendation import ALS
-
-    # 构建用户-课程评分矩阵
-    rating_df = df.select("student_id", "course", "score").withColumnRenamed("score", "rating")
-
-    # 使用 ALS 训练模型
-    als = ALS(
-        maxIter=5,
-        regParam=0.01,
-        userCol="student_id",
-        itemCol="course",
+        userCol="user_id_numeric",
+        itemCol="course_id_numeric",
         ratingCol="rating"
     )
 
-    model = als.fit(rating_df)
+    model = als.fit(indexed_rating_df)
 
-    # 获取物品（课程）因子向量
-    item_factors = model.itemFactors
+    # 获取所有用户的推荐
+    recommendations = model.recommendForAllUsers(5)  # 每个用户推荐5门课
 
-    # 向量相似度计算（余弦相似度）
-    def cosine_similarity(vec1, vec2):
-        dot = sum(float(x * y) for x, y in zip(vec1, vec2))
-        norm1 = sum(x ** 2 for x in vec1) ** 0.5
-        norm2 = sum(y ** 2 for y in vec2) ** 0.5
-        return dot / (norm1 * norm2) if norm1 * norm2 != 0 else 0
+    # 展开推荐结果
+    exploded = recommendations.withColumn("exploded", explode("recommendations")) \
+        .select("user_id_numeric", col("exploded.course_id_numeric").alias("course_id_numeric"), col("exploded.rating").alias("rating"))
 
-    similarity_udf = F.udf(lambda v1, v2: cosine_similarity(v1.toArray(), v2.toArray()), FloatType())
+    # Step 3: 映射回原始 course 名称
+    course_mapping = indexed_rating_df.select("course", "course_id_numeric").dropDuplicates()
 
-    # 自连接计算课程相似度
-    course_similarity = item_factors.alias("i1").join(
-        item_factors.alias("i2"),
-        col("i1.id") < col("i2.id")
-    ).select(
-        col("i1.id").alias("course1"),
-        col("i2.id").alias("course2"),
-        similarity_udf(col("i1.features"), col("i2.features")).alias("similarity")
-    ).orderBy(col("similarity").desc())
+    # 合并 course 映射
+    final_recs_with_course = exploded.join(course_mapping, on="course_id_numeric", how="inner")
 
-    return course_similarity
+    # Step 4: 映射回原始 student_id
+    user_mapping = indexed_rating_df.select("student_id", "user_id_numeric").dropDuplicates()
+
+    # 合并 student 映射
+    final_recs = final_recs_with_course.join(user_mapping, on="user_id_numeric", how="inner") \
+        .select("student_id", "course", "rating")
+
+    return final_recs

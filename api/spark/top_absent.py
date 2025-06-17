@@ -1,14 +1,18 @@
+from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 
 
-def get_top_absent_students(df):
+def get_top_absent_students(df: DataFrame):
+    """
+    获取每门课程缺勤人数最多的前5名学生
+    """
+
     absent_df = df.filter(df.state == 'L') \
         .groupBy("course", "student_id") \
         .agg(F.count("*").alias("absent_count"))
 
     window_spec = Window.partitionBy("course").orderBy(F.desc("absent_count"))
-    
     top_absent = absent_df.withColumn("absence_rank", F.rank().over(window_spec)) \
         .filter(F.col("absence_rank") <= 5)
 

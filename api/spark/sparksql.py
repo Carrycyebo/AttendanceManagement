@@ -44,39 +44,39 @@ def write_to_mysql(batch_df, batch_id):
     cursor.close()
     connection.close()
 
-def write_course_stats(batch_df, batch_id):
-    """
-    写入课程统计数据到新表
-    """
-    # 课程维度统计
-    course_stats = batch_df.groupBy("course", "status")\
-                         .agg(F.sum("count").alias("total_count"))
+# def write_course_stats(batch_df, batch_id):
+#     """
+#     写入课程统计数据到新表
+#     """
+#     # 课程维度统计
+#     course_stats = batch_df.groupBy("course", "status")\
+#                          .agg(F.sum("count").alias("total_count"))
     
-    connection = get_db()
-    cursor = connection.cursor()
+#     connection = get_db()
+#     cursor = connection.cursor()
     
-    for row in course_stats.collect():
-        sql = """
-        INSERT INTO course_stats 
-        (course, attendance_count, absence_count)
-        VALUES (%s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-            attendance_count = attendance_count + VALUES(attendance_count),
-            absence_count = absence_count + VALUES(absence_count)
-        """
-        # 根据状态更新不同字段
-        if row['status'] == 'A':
-            cursor.execute(sql, (
-                row['course'], row['total_count'], 0
-            ))
-        else:
-            cursor.execute(sql, (
-                row['course'], 0, row['total_count']
-            ))
+#     for row in course_stats.collect():
+#         sql = """
+#         INSERT INTO course_stats 
+#         (course, attendance_count, absence_count)
+#         VALUES (%s, %s, %s)
+#         ON DUPLICATE KEY UPDATE
+#             attendance_count = attendance_count + VALUES(attendance_count),
+#             absence_count = absence_count + VALUES(absence_count)
+#         """
+#         # 根据状态更新不同字段
+#         if row['status'] == 'A':
+#             cursor.execute(sql, (
+#                 row['course'], row['total_count'], 0
+#             ))
+#         else:
+#             cursor.execute(sql, (
+#                 row['course'], 0, row['total_count']
+#             ))
     
-    connection.commit()
-    cursor.close()
-    connection.close()
+#     connection.commit()
+#     cursor.close()
+#     connection.close()
 
 
 def run_spark_sql():
@@ -125,11 +125,11 @@ def run_spark_sql():
         .trigger(processingTime="2 seconds") \
         .start()  # 启动流任务
         
-    windowed_stream.writeStream \
-    .foreachBatch(write_course_stats) \
-    .outputMode("update") \
-    .trigger(processingTime="2 seconds") \
-    .start()
+    # windowed_stream.writeStream \
+    # .foreachBatch(write_course_stats) \
+    # .outputMode("update") \
+    # .trigger(processingTime="2 seconds") \
+    # .start()
 
     # 等待流任务结束
     spark.streams.awaitAnyTermination()
