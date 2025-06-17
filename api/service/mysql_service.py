@@ -72,3 +72,27 @@ def get_user_recommendations():
     cursor.close()
     connection.close()
     return data
+
+def check_user_credentials(username, password):
+    connection = get_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    query = "SELECT * FROM users WHERE username = %s AND password = %s"
+    cursor.execute(query, (username, password))
+    user = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    return user is not None
+
+def create_user(username, password):
+    connection = get_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    try:
+        query = "INSERT INTO users (username, password) VALUES (%s, %s)"
+        cursor.execute(query, (username, password))
+        connection.commit()
+        return True
+    except pymysql.err.IntegrityError:
+        return False
+    finally:
+        cursor.close()
+        connection.close()
