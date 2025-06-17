@@ -1,5 +1,6 @@
 import os
 import pymysql
+# 从 pyspark.sql 模块导入 SparkSession 类，用于创建和管理 Spark 会话
 from pyspark.sql import SparkSession
 from api.db.util import get_db
 import pyspark.sql.functions as F
@@ -82,6 +83,7 @@ def write_to_mysql(batch_df, batch_id):
 def run_spark_sql():
     #启动 Spark Structured Streaming，读取 Kafka 流数据，进行处理后将数据推送到 MySQL。
     # 1- 创建 SparkSession,与spark交互
+    # 创建一个 SparkSession 实例，设置应用名称为 'KafkaSparkSQL'，并启用 Hive 支持
     spark = SparkSession.builder \
         .config("spark.sql.shuffle.partitions", 1) \
         .appName('ss_kafka_push_to_mysql') \
@@ -135,4 +137,5 @@ def run_spark_sql():
     spark.streams.awaitAnyTermination()
 
 if __name__ == '__main__':
+    # 程序入口，当脚本作为主程序运行时执行以下代码
     run_spark_sql()

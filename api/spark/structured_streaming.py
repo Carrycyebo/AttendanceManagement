@@ -1,6 +1,8 @@
 import os
 from pyspark.sql import SparkSession
+# 从 pyspark.sql.functions 模块导入相关函数
 import pyspark.sql.functions as F
+import os
 
 # 设置HADOOP_HOME环境变量，指定Hadoop的安装路径，这对于Spark在某些情况下与Hadoop相关功能的交互是必要的
 # 注意：这里假设Hadoop 2.8.1版本安装在指定路径下，实际使用中需根据真实安装情况调整路径
@@ -11,6 +13,7 @@ def run_structured_streaming():
     # 1- 创建SparkSession
     # SparkSession是与Spark进行交互的入口点，通过配置相关参数来初始化Spark应用
     # 配置了shuffle分区数为1，应用名称为'ss_kafka_push'，并设置运行模式为本地模式（使用所有可用的本地核心）
+    # 创建一个 SparkSession 实例，设置应用名称为 'KafkaStructuredStreaming'，并启用 Hive 支持
     spark = SparkSession.builder \
        .config("spark.sql.shuffle.partitions", 1) \
        .appName('ss_kafka_push') \
@@ -113,4 +116,5 @@ def run_structured_streaming():
     spark.streams.awaitAnyTermination()
 
 if __name__ == "__main__":
+    # 程序入口，当脚本作为主程序运行时执行以下代码
     run_structured_streaming()

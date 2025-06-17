@@ -155,4 +155,5 @@ def run_spark_RDD():
 
 
 if __name__ == '__main__':
+    # 程序入口，当脚本作为主程序运行时执行以下代码
     run_spark_RDD()
