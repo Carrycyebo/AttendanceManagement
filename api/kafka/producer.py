@@ -25,13 +25,14 @@ def send_data():
     for i in range(5):
         #将出勤概率设置为百分之八十，缺勤为百分之二十
         state = "A" if random.random() < 0.8 else "L"
+        score = 100 if state == "A" else 0
         course = random.choice(course_array)
 
         #从列表中随机选择一名学生
         student = get_random_student()
 
         if student:  # 检查学生是空还是没有
-            data_batch.append('\t'.join([student[0], student[1], course, student[2], state]))
+            data_batch.append('\t'.join([student[0], student[1], course, student[2], str(score), state]))
         else:
             print("生成失败")
     

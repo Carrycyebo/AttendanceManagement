@@ -68,7 +68,8 @@ def run_spark_sql():
         .withColumn("name", F.split(F.col("value"), "\t")[1]) \
         .withColumn("course", F.split(F.col("value"), "\t")[2]) \
         .withColumn("student_id", F.split(F.col("value"), "\t")[3]) \
-        .withColumn("status", F.split(F.col("value"), "\t")[4]) \
+        .withColumn("score", F.split(F.col("value"), "\t")[4]) \
+        .withColumn("status", F.split(F.col("value"), "\t")[5]) \
         .drop("value")
 
     # 4- 定义时间窗口，并使用窗口聚合

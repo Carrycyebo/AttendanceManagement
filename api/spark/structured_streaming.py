@@ -36,7 +36,8 @@ def run_structured_streaming():
        .withColumn("student_name", F.split(F.col("value"), "\t")[1]) \
        .withColumn("course", F.split(F.col("value"), "\t")[2]) \
        .withColumn("student_id", F.split(F.col("value"), "\t")[3]) \
-       .withColumn("status", F.split(F.col("value"), "\t")[4]) \
+       .withColumn("score", F.split(F.col("value"), "\t")[4]) \
+       .withColumn("status", F.split(F.col("value"), "\t")[5]) \
        .drop("value")
 
     # 4- 使用时间窗口对数据进行分组聚合

@@ -84,7 +84,8 @@ def run_spark_RDD():
        .withColumn("student_name", F.split(F.col("value"), "\t")[1]) \
        .withColumn("course", F.split(F.col("value"), "\t")[2]) \
        .withColumn("student_id", F.split(F.col("value"), "\t")[3]) \
-       .withColumn("status", F.split(F.col("value"), "\t")[4]) \
+       .withColumn("score", F.split(F.col("value"), "\t")[4]) \
+       .withColumn("status", F.split(F.col("value"), "\t")[5]) \
        .drop("value")
 
     # 4- 数据统计，定义时间窗口，按照指定的一组列（class_id、student_id、student_name、status以及一个基于时间戳的时间窗口）进行分组，

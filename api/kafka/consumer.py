@@ -11,7 +11,8 @@ def get_kafka_consumer():
         auto_offset_reset='earliest'  # 从最早的消息开始消费
     )
     for msg in consumer:
-        print((msg.value).decode('utf8'))
+        data = (msg.value).decode('utf8').split('\t')
+        print(f"班级: {data[0]}, 学生: {data[1]}, 课程: {data[2]}, 学号: {data[3]}, 分数: {data[4]}, 状态: {data[5]}")
 
     # return consumer
 get_kafka_consumer()
