@@ -52,14 +52,55 @@ def write_to_mysql(batch_df, batch_id):
     # 关闭数据库连接，释放连接资源
     connection.close()
 
+def write_comprehensive_stats(batch_df, batch_id):
+        """
+        写入综合统计数据到新表
+        """
+        # 学生维度统计
+        student_stats = batch_df.groupBy(
+            "student_id", 
+            "student_name", 
+            "class_id", 
+            "status"
+        ).agg(F.sum("count").alias("total_count"))
+        
+        # 使用现有get_db()方法写入
+        connection = get_db()
+        cursor = connection.cursor()
+        
+        for row in student_stats.collect():
+            sql = """
+            INSERT INTO student_stats 
+            (student_id, student_name, class_id, 
+             attendance_count, absence_count, score)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                attendance_count = attendance_count + VALUES(attendance_count),
+                absence_count = absence_count + VALUES(absence_count),
+                score = score + VALUES(score)  # 添加这行使score也能累加
+            """
+            # 根据状态更新不同字段
+            if row['status'] == 'A':
+                cursor.execute(sql, (
+                    row['student_id'], row['student_name'], row['class_id'],
+                    row['total_count'], 0, row['total_count']*100
+                ))
+            else:
+                cursor.execute(sql, (
+                    row['student_id'], row['student_name'], row['class_id'],
+                    0, row['total_count'], 0
+                ))
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+
 
 def run_spark_RDD():
     """
     主函数，用于执行整个Spark任务流程，包括创建SparkSession、读取Kafka数据、解析数据、统计数据以及将数据写入到MySQL数据库
     """
-    # 1- 创建SparkSession对象，这是使用Spark的入口点，用于配置和启动Spark应用程序
-    # 设置了一些Spark相关的配置参数，比如设置shuffle分区数为1（可根据实际情况调整），
-    # 指定应用程序的名称为'ss_kafka_push_to_mysql'，并且以本地模式运行（使用本地所有可用的CPU核心）
+
     spark = SparkSession.builder \
        .config("spark.sql.shuffle.partitions", 1) \
        .appName('ss_kafka_push_to_mysql') \
@@ -67,18 +108,14 @@ def run_spark_RDD():
        .config("spark.executor.processTreeMetrics.enabled", "false") \
        .getOrCreate()
 
-    # 2- 读取Kafka数据流，配置Kafka相关的参数，如指定Kafka的服务器地址（这里是"zxlu:9092"），
-    # 以及要订阅的主题模式（这里是"attendance"，意味着会匹配符合这个模式的主题），然后加载数据为一个流形式的DataFrame
+
     kafka_stream = spark.readStream \
        .format("kafka") \
        .option("kafka.bootstrap.servers", "zxlu:9092") \
        .option("subscribePattern", "attendance") \
        .load()
 
-    # 3- 解析Kafka数据，从Kafka读取到的原始数据中提取出需要的字段，并进行相应的列转换操作
-    # 首先将Kafka消息中的value字段转换为字符串类型并命名为"value"，同时保留消息的时间戳字段"timestamp"
-    # 然后使用F.split函数按照制表符"\t"分割"value"字段，提取出各个部分并分别创建新的列，如class_id、student_name等，
-    # 最后删除原始的"value"列，因为已经提取出了其中有用的信息
+
     parsed_stream = kafka_stream.selectExpr("cast(value as string) as value", "timestamp") \
        .withColumn("class_id", F.split(F.col("value"), "\t")[0]) \
        .withColumn("student_name", F.split(F.col("value"), "\t")[1]) \
@@ -88,9 +125,7 @@ def run_spark_RDD():
        .withColumn("status", F.split(F.col("value"), "\t")[5]) \
        .drop("value")
 
-    # 4- 数据统计，定义时间窗口，按照指定的一组列（class_id、student_id、student_name、status以及一个基于时间戳的时间窗口）进行分组，
-    # 然后对每个分组内的数据进行计数，统计在每个时间窗口内，符合各个分组条件的数据出现的次数
-    # 这里使用了F.window函数基于时间戳字段创建了一个2秒的时间窗口，意味着每2秒的数据会被划分到一个窗口内进行统计
+
     attendance_counts = parsed_stream \
        .groupBy(
             F.window(parsed_stream.timestamp, "2 seconds"),
@@ -101,17 +136,16 @@ def run_spark_RDD():
         ) \
        .count()
 
-    # 以下是另一种分组统计的方式，只是简单地按照class_id、student_id、student_name、status这几个字段进行分组计数，
-    # 没有考虑时间窗口的因素，如果不需要基于时间窗口统计，可以使用这种方式替代上面的分组统计
-    # attendance_counts = parsed_stream.groupBy("class_id", "student_id", "student_name", "status") \
-    #    .count()
 
-    # 5- 使用foreachBatch操作，将统计好的数据推送到MySQL数据库中
-    # 指定输出模式为"update"，意味着每次有新的数据更新时，会相应地更新输出结果（这里对应写入到MySQL的数据更新）
-    # 设置触发间隔为每2秒触发一次数据处理和写入操作，确保数据能按照一定的时间节奏进行处理和持久化
-    # 最后启动流计算任务，使其开始运行
     attendance_counts.writeStream \
        .foreachBatch(write_to_mysql) \
+       .outputMode("update") \
+       .trigger(processingTime="2 seconds") \
+       .start()
+
+       # 在原有writeStream后添加新处理
+    attendance_counts.writeStream \
+       .foreachBatch(write_comprehensive_stats) \
        .outputMode("update") \
        .trigger(processingTime="2 seconds") \
        .start()

@@ -5,7 +5,7 @@ from kafka import KafkaProducer
 ## @秋风起  在这个文件下写
 
 # Kafka 配置
-# bootstrap_servers = ['118.31.166.152:9092']
+# bootstrap_servers = ['zxlu:9092']
 # topic = 'test'
 
 # 创建 KafkaProducer 实例
