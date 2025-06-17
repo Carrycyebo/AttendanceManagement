@@ -8,6 +8,7 @@ from pyspark.sql.streaming import DataStreamWriter
 
 # 设置 Hadoop 环境变量 支持spark HDFS 连接
 # os.environ['JAVA_HOME'] = 'C:\\Program Files\\Java\\jdk1.8.0_351'
+os.environ['JAVA_HOME'] = 'D:\\envs\\java\\jdk1.8.0_441'
 os.environ['HADOOP_HOME'] = 'C:\\hadoop-2.8.1'
 
 #定义写入MySQL的函数
@@ -50,13 +51,14 @@ def run_spark_sql():
         .config("spark.sql.shuffle.partitions", 1) \
         .appName('ss_kafka_push_to_mysql') \
         .master('local[*]') \
+        .config("spark.executor.processTreeMetrics.enabled", "false") \
         .getOrCreate()
 
     # 2- 读取 Kafka 数据流
     # 通过 Spark Structured Streaming 读取 Kafka 数据流。
     kafka_stream = spark.readStream \
         .format("kafka") \
-        .option("kafka.bootstrap.servers", "zhao:9092") \
+        .option("kafka.bootstrap.servers", "zxlu:9092") \
         .option("subscribePattern", "attendance") \
         .load() # 读取数据流
 

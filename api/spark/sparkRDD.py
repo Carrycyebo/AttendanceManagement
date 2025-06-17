@@ -6,6 +6,7 @@ import pyspark.sql.functions as F
 
 # 设置Hadoop环境变量，指定Hadoop的安装路径，以便后续Spark能够正确调用Hadoop相关功能
 # 注意这里如果Java环境有问题也需要类似设置JAVA_HOME，当前代码中注释掉了相关设置，可按需取消注释启用
+os.environ['JAVA_HOME'] = 'D:\\envs\\java\\jdk1.8.0_441'
 os.environ['HADOOP_HOME'] = 'C:\\hadoop-2.8.1'
 
 # 定义一个函数，用于将Spark DataFrame中的每一批数据写入到MySQL数据库中
@@ -63,13 +64,14 @@ def run_spark_RDD():
        .config("spark.sql.shuffle.partitions", 1) \
        .appName('ss_kafka_push_to_mysql') \
        .master('local[*]') \
+       .config("spark.executor.processTreeMetrics.enabled", "false") \
        .getOrCreate()
 
-    # 2- 读取Kafka数据流，配置Kafka相关的参数，如指定Kafka的服务器地址（这里是"zhao:9092"），
+    # 2- 读取Kafka数据流，配置Kafka相关的参数，如指定Kafka的服务器地址（这里是"zxlu:9092"），
     # 以及要订阅的主题模式（这里是"attendance"，意味着会匹配符合这个模式的主题），然后加载数据为一个流形式的DataFrame
     kafka_stream = spark.readStream \
        .format("kafka") \
-       .option("kafka.bootstrap.servers", "zhao:9092") \
+       .option("kafka.bootstrap.servers", "zxlu:9092") \
        .option("subscribePattern", "attendance") \
        .load()
 

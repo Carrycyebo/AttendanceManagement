@@ -3,7 +3,7 @@ from api.spark.sparksql import run_spark_sql
 from api.spark.sparkRDD import run_spark_RDD
 import multiprocessing
 import os
-
+os.environ['JAVA_HOME'] = 'D:\\envs\\java\\jdk1.8.0_441'
 os.environ['HADOOP_HOME'] = 'C:\\hadoop-2.8.1'
 
 #多进程分别运行run_structured_streaming 和run_spark_sql 和run_spark_RDD

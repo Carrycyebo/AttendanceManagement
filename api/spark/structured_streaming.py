@@ -4,6 +4,7 @@ import pyspark.sql.functions as F
 
 # 设置HADOOP_HOME环境变量，指定Hadoop的安装路径，这对于Spark在某些情况下与Hadoop相关功能的交互是必要的
 # 注意：这里假设Hadoop 2.8.1版本安装在指定路径下，实际使用中需根据真实安装情况调整路径
+os.environ['JAVA_HOME'] = 'D:\\envs\\java\\jdk1.8.0_441'
 os.environ['HADOOP_HOME'] = 'C:\\hadoop-2.8.1'
 
 def run_structured_streaming():
@@ -14,6 +15,7 @@ def run_structured_streaming():
        .config("spark.sql.shuffle.partitions", 1) \
        .appName('ss_kafka_push') \
        .master('local[*]') \
+       .config("spark.executor.processTreeMetrics.enabled", "false") \
        .getOrCreate()
 
     # 2- 读取Kafka数据流
@@ -21,7 +23,7 @@ def run_structured_streaming():
     # 通过"subscribePattern"选项订阅了名为"test"的主题（这里支持通配符订阅模式，可以订阅多个符合模式的主题）
     kafka_stream = spark.readStream \
        .format("kafka") \
-       .option("kafka.bootstrap.servers", "zhao:9092") \
+       .option("kafka.bootstrap.servers", "zxlu:9092") \
        .option("subscribePattern", "attendance") \
        .load()
 
@@ -79,7 +81,7 @@ def run_structured_streaming():
             "to_json(struct(*)) as value"  # 将所有列转换为JSON格式
         ).write \
            .format("kafka") \
-           .option("kafka.bootstrap.servers", "zhao:9092") \
+           .option("kafka.bootstrap.servers", "zxlu:9092") \
            .option("topic", topic_name) \
            .save()
 

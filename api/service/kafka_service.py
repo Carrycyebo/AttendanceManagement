@@ -4,7 +4,7 @@ import json
 def create_kafka_consumer(topic):
     return KafkaConsumer(
         topic,
-        bootstrap_servers="zhao:9092",
+        bootstrap_servers="zxlu:9092",
         group_id="test",
         auto_offset_reset='latest'
     )
